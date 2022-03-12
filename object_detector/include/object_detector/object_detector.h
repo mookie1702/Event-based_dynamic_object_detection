@@ -22,15 +22,16 @@
 
 using namespace std;
 
+
 class ObjectDetector {
 private:
     /* flags */
 
     /* parameters */
     string img_raw_topic_;
-    string event_camera_topic_;
+    string events_topic_;
     string imu_topic_;
-    string depth_camera_topic_;
+    // string depth_topic_;
     string odom_topic_;
 
     /* detecting utilities */
@@ -40,24 +41,26 @@ private:
     ros::NodeHandle &nh_;
 
     ros::Subscriber img_raw_sub_;
-    ros::Subscriber event_camera_sub_;
+    ros::Subscriber events_sub_;
     ros::Subscriber imu_sub_;
-    ros::Subscriber depth_camera_sub_;
+    // ros::Subscriber depth_sub_;
     ros::Subscriber odom_sub_;
 
     /* ROS functions */
     void ReadParameters(ros::NodeHandle &n);
-    void ImageCallback(const sensor_msgs::Image::ConstPtr &imsg);
-    void EventsCallback(const dvs_msgs::EventArray::ConstPtr &emsg);
-    void ImuCallback(const sensor_msgs::ImuConstPtr &imu);
-    void DepthCallback(const sensor_msgs::ImageConstPtr &msg);
-    void OdometryCallback(const nav_msgs::Odometry::ConstPtr &odom);
+    void ImgCallback(const sensor_msgs::Image::ConstPtr &imgMsg);
+    void EventsCallback(const dvs_msgs::EventArray::ConstPtr &eventMsg);
+    void ImuCallback(const sensor_msgs::ImuConstPtr &imuMsg);
+    // void DepthCallback(const sensor_msgs::ImageConstPtr &depthMsg);
+    void OdomCallback(const nav_msgs::Odometry::ConstPtr &odomMsg);
 
     /* inline functions */
 
 public:
-    ObjectDetector(/* args */);
-    ~ObjectDetector();
+    ObjectDetector(ros::NodeHandle &nh) : nh_(nh) {
+
+    }
+    ~ObjectDetector() {}
 
     void main();
 };

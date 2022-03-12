@@ -21,9 +21,12 @@ private:
     bool is_object_;
 
     /* parameters */
+    // DBSCAN parameters
+    const float DBSCAN_Eps_ = 3.0;
+    const int DBSCAN_MinPts_ = 45;
 
     /* images */
-    cv::Mat event_counts;
+    cv::Mat event_counts_;
     cv::Mat time_img_;
     cv::Mat gray_img_;
     cv::Mat processed_img_;
@@ -36,7 +39,9 @@ public:
     }
     ~Clustering();
 
-    
+    void Cluster();
+    void LoadCompensatedImgs(const cv::Mat &eventCount, const cv::Mat &timeImg);
+
 };
 
 #endif

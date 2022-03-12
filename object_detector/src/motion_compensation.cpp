@@ -5,11 +5,12 @@ inline bool MotionCompensation::IsWithinTheBoundary(const int &x, const int &y) 
   return (x >= 0 && x < IMG_COLS && y >= 0 && y < IMG_ROWS);
 }
 
-void MotionCompensation::main() {
+void MotionCompensation::MotionCompensate() {
     ClearData();
     AvgIMU();
     IMU_buffer_.clear();
     RotationalCompensation(&time_img_, &event_counts_);
+    MorphologicalOperation(&compensated_time_img_);
 }
 
 void MotionCompensation::ClearData() {
@@ -20,17 +21,17 @@ void MotionCompensation::ClearData() {
     event_counts_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_8UC1);
 }
 
-void MotionCompensation::LoadIMUs(const sensor_msgs::ImuConstPtr &imu_msg) {
-    IMU_buffer_.push_back(*imu_msg);
+void MotionCompensation::LoadIMUs(const sensor_msgs::ImuConstPtr &imuMsg) {
+    IMU_buffer_.push_back(*imuMsg);
 }
 
-void MotionCompensation::LoadEvents(const dvs_msgs::EventArray::ConstPtr &event_msg) {
-    events_buffer_.assign(event_msg->events.begin(), event_msg->events.end());
+void MotionCompensation::LoadEvents(const dvs_msgs::EventArray::ConstPtr &eventMsg) {
+    events_buffer_.assign(eventMsg->events.begin(), eventMsg->events.end());
     event_size_ = events_buffer_.size();
 }
 
-void MotionCompensation::LoadOdometry(const nav_msgs::Odometry::ConstPtr &odom_msg) {
-    odoms_buffer_ = *odom_msg;
+void MotionCompensation::LoadOdometry(const nav_msgs::Odometry::ConstPtr &odomMsg) {
+    odoms_buffer_ = *odomMsg;
 }
 
 void MotionCompensation::AvgIMU() {
@@ -115,15 +116,44 @@ void MotionCompensation::RotationalCompensation(cv::Mat *timeImg, cv::Mat *event
             *q += (delta_T - *q) / (*c);
         }
     }
-
 }
 
-cv::Mat VisualizeEventImg(const cv::Mat timeImg) {
-    cv::Mat m, m_color;
-    cv::normalize(timeImg, m, 0, 255, cv::NORM_MINMAX);
-    m.convertTo(m, CV_8UC1);
-    cv::applyColorMap(m, m_color, cv::COLORMAP_JET);
-    return m_color;
+void MotionCompensation::MorphologicalOperation(cv::Mat *timeImg) {
+    cv::Mat threshold_img;
+    cv::Mat tmp_img;
+    cv::Mat normalized_time_img = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
+    cv::normalize(time_img_, normalized_time_img, 0, 1, cv::NORM_MINMAX);
+
+    float threshold = cv::mean(normalized_time_img, event_counts_)[0] +
+                        threshold_a_ * omega_ + threshold_b_;
+
+    cv::threshold(normalized_time_img, threshold_img, threshold, 1, cv::THRESH_TOZERO);
+
+    /* Gaussian Blur */
+    cv::blur(threshold_img, tmp_img, cv::Size(5, 5));
+    cv::normalize(tmp_img, tmp_img, 0, 255, cv::NORM_MINMAX);
+
+    /* Morphological Operation */
+    cv::Mat kernel = cv::getStructuringElement(
+        cv::MORPH_RECT, cv::Size(kernel_size_, kernel_size_),
+        cv::Point(-1, -1));
+    cv::morphologyEx(tmp_img, tmp_img, cv::MORPH_OPEN, kernel, cv::Point(-1, -1), 1);
+
+    /* element-wise square to enhance the img contrast */
+    tmp_img = tmp_img.mul(tmp_img);
+    cv::normalize(tmp_img, tmp_img, 0, 255, cv::NORM_MINMAX);
+    tmp_img.convertTo(*timeImg, CV_8UC1);
+}
+
+void MotionCompensation::VisualizeEventImg(const cv::Mat eventImg) {
+    cv::Mat tmp_img, display_img;
+    cv::normalize(eventImg, tmp_img, 0, 255, cv::NORM_MINMAX);
+    tmp_img.convertTo(tmp_img, CV_8UC1);
+    cv::applyColorMap(tmp_img, display_img, cv::COLORMAP_JET);
+
+    cv::namedWindow("Time Image");
+    cv::imshow( "window", display_img);
+    cv::waitKey(0);
 }
 
 Eigen::Matrix3f MotionCompensation::Vector2SkewMatrix(Eigen::Vector3f v) {
@@ -132,7 +162,7 @@ Eigen::Matrix3f MotionCompensation::Vector2SkewMatrix(Eigen::Vector3f v) {
     return skew_matrix;
 }
 
-void MotionCompensation::ConvertToHomogeneous(Eigen::Vector3f& v) {
+void MotionCompensation::ConvertToHomogeneous(Eigen::Vector3f &v) {
     v[0] = v[0] / v[2];
     v[1] = v[1] / v[2];
     v[2] = 1;
