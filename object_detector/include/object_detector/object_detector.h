@@ -18,7 +18,7 @@
 #include <sensor_msgs/Image.h>
 
 #include "motion_compensation.h"
-#include "clustering.h"
+#include "object_segmentation.h"
 
 using namespace std;
 
@@ -36,6 +36,7 @@ private:
 
     /* detecting utilities */
     MotionCompensation::Ptr motion_compensation_;
+    ObjectSegmentation::Ptr object_segmentation_;
 
     /* ROS utilities */
     ros::NodeHandle &nh_;

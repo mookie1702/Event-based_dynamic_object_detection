@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include "object_detector/motion_compensation.h"
+#include "motion_compensation.h"
 
 inline bool MotionCompensation::IsWithinTheBoundary(const int &x, const int &y) {
   return (x >= 0 && x < IMG_COLS && y >= 0 && y < IMG_ROWS);
@@ -9,7 +9,7 @@ void MotionCompensation::MotionCompensate() {
     ClearData();
     AvgIMU();
     IMU_buffer_.clear();
-    RotationalCompensation(&time_img_, &event_counts_);
+    RotationalCompensation(&time_img_, &event_count_);
     MorphologicalOperation(&compensated_time_img_);
 }
 
@@ -18,7 +18,7 @@ void MotionCompensation::ClearData() {
     events_buffer_.clear();
     imu_size_ = IMU_buffer_.size();
     time_img_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
-    event_counts_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_8UC1);
+    event_count_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_8UC1);
 }
 
 void MotionCompensation::LoadIMUs(const sensor_msgs::ImuConstPtr &imuMsg) {
@@ -124,7 +124,7 @@ void MotionCompensation::MorphologicalOperation(cv::Mat *timeImg) {
     cv::Mat normalized_time_img = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
     cv::normalize(time_img_, normalized_time_img, 0, 1, cv::NORM_MINMAX);
 
-    float threshold = cv::mean(normalized_time_img, event_counts_)[0] +
+    float threshold = cv::mean(normalized_time_img, event_count_)[0] +
                         threshold_a_ * omega_ + threshold_b_;
 
     cv::threshold(normalized_time_img, threshold_img, threshold, 1, cv::THRESH_TOZERO);
@@ -135,8 +135,8 @@ void MotionCompensation::MorphologicalOperation(cv::Mat *timeImg) {
 
     /* Morphological Operation */
     cv::Mat kernel = cv::getStructuringElement(
-        cv::MORPH_RECT, cv::Size(kernel_size_, kernel_size_),
-        cv::Point(-1, -1));
+        cv::MORPH_RECT, cv::Size(kernel_size_, kernel_size_), cv::Point(-1, -1));
+
     cv::morphologyEx(tmp_img, tmp_img, cv::MORPH_OPEN, kernel, cv::Point(-1, -1), 1);
 
     /* element-wise square to enhance the img contrast */

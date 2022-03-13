@@ -1,4 +1,4 @@
-#include "object_detector/object_detector.h"
+#include "object_detector.h"
 
 void ObjectDetector::main() {
   ReadParameters(nh_);
@@ -24,6 +24,16 @@ void ObjectDetector::ImgCallback(const sensor_msgs::Image::ConstPtr &imgMsg) {
 }
 
 void ObjectDetector::EventsCallback(const dvs_msgs::EventArray::ConstPtr &eventMsg) {
+
+  /* ego-motion compensation */
+  motion_compensation_->LoadEvents(eventMsg);
+  motion_compensation_->MotionCompensate();
+
+  /* detect objects base on compensated img */
+  cv::Mat compensated_time_img_, event_count_;
+  compensated_time_img_ = motion_compensation_->GetCompensatedTimeImg();
+  event_count_ = motion_compensation_->GetEventCount();
+
 
 }
 

@@ -28,7 +28,7 @@ private:
     /* flags */
 
     /* parameters */
-    Eigen::Matrix3f event_camera_K_; // event camera's instrinstic matrix
+    Eigen::Matrix3f event_camera_K_;    // event camera's instrinstic matrix
     Eigen::Matrix3f event_caemra_K_inverse_;
 
     // threshold parameters
@@ -47,10 +47,10 @@ private:
 
     // cv::Mat depth_img_;
     cv::Mat source_time_frame_;
-    cv::Mat source_event_counts_;
+    cv::Mat source_event_count_;
 
-    cv::Mat time_img_;      // mean-time image
-    cv::Mat event_counts_;  // counts for event in each pixel
+    cv::Mat time_img_;     // mean-time image
+    cv::Mat event_count_;  // the img that counts events in each pixel
 
     cv::Mat compensated_time_img_;
 
@@ -88,6 +88,12 @@ public:
 
     /* display the effect of motion compensation */
     void VisualizeEventImg(const cv::Mat eventImg);
+
+    cv::Mat GetSourceTimeFrame(void) { return source_time_frame_; }
+    cv::Mat GetSourceEventCount(void) { return source_event_count_; }
+    cv::Mat GetTimeImage(void) { return time_img_; }
+    cv::Mat GetEventCount(void) { return event_count_; }
+    cv::Mat GetCompensatedTimeImg(void) { return compensated_time_img_; }
 
     /* self-defined math functions */
     Eigen::Matrix3f Vector2SkewMatrix(Eigen::Vector3f v);

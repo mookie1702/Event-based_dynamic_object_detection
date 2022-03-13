@@ -1,4 +1,4 @@
-#include "object_detector/object_detector.h"
+#include "object_detector.h"
 
 int main(int argc, char **argv) {
   ROS_INFO("The object detector node has started!");

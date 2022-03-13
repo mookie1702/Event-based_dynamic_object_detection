@@ -1,5 +1,5 @@
-#ifndef CLUSTERING_H
-#define CLUSTERING_H
+#ifndef OBJECT_SEGMENTATION_H
+#define OBJECT_SEGMENTATION_H
 
 #include <iostream>
 #include <cmath>
@@ -15,7 +15,7 @@ using namespace std;
 #define IMG_ROWS 480
 #define IMG_COLS 640
 
-class Clustering {
+class ObjectSegmentation {
 private:
     /* flags */
     bool is_object_;
@@ -25,23 +25,21 @@ private:
     const float DBSCAN_Eps_ = 3.0;
     const int DBSCAN_MinPts_ = 45;
 
-    /* images */
+    /* data */
     cv::Mat event_counts_;
-    cv::Mat time_img_;
+    cv::Mat compensated_time_img_;
     cv::Mat gray_img_;
-    cv::Mat processed_img_;
 
 
 public:
-    Clustering() {
+    typedef std::unique_ptr<ObjectSegmentation> Ptr;
+
+    ObjectSegmentation() {
         gray_img_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_8UC1);
-        processed_img_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_8UC1);
     }
-    ~Clustering();
+    ~ObjectSegmentation() {}
 
-    void Cluster();
-    void LoadCompensatedImgs(const cv::Mat &eventCount, const cv::Mat &timeImg);
-
+    void ObjectSegment();
 };
 
 #endif
