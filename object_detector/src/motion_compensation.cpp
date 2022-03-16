@@ -8,16 +8,27 @@ inline bool MotionCompensation::IsWithinTheBoundary(const int &x, const int &y) 
 void MotionCompensation::MotionCompensate() {
     ClearData();
     AvgIMU();
-    IMU_buffer_.clear();
+
+    AccumulateEvents(&source_time_frame_, &source_event_count_);
+    Visualization(source_time_frame_, "source_time_frame_");
+
     RotationalCompensation(&time_img_, &event_count_);
     MorphologicalOperation(&compensated_time_img_);
+
+    Visualization(compensated_time_img_, "compensated_time_img_");
+
+    ROS_INFO("The compensation has been completed!");
+
+    IMU_buffer_.clear();
+    events_buffer_.clear();
 }
 
 void MotionCompensation::ClearData() {
-    omega_avg_.setZero();
-    events_buffer_.clear();
-    imu_size_ = IMU_buffer_.size();
+    source_time_frame_  = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
     time_img_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
+    compensated_time_img_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
+
+    source_event_count_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_8UC1);
     event_count_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_8UC1);
 }
 
@@ -53,8 +64,10 @@ void MotionCompensation::AvgIMU() {
 void MotionCompensation::AccumulateEvents(cv::Mat *timeImg, cv::Mat *eventCount){
     auto t0 = events_buffer_[0].ts;
     dvs_msgs::Event e;
-    float delta_T = 0;
+    float delta_T = 0.0f;
     int e_x = 0, e_y = 0;
+    int *c;
+    float *q;
 
     for (int i = 0; i < event_size_; i++) {
         e = events_buffer_[i];
@@ -65,8 +78,8 @@ void MotionCompensation::AccumulateEvents(cv::Mat *timeImg, cv::Mat *eventCount)
         if (!IsWithinTheBoundary(e_x, e_y)) {
             continue;
         } else {
-            int *c = eventCount->ptr<int>(e_y, e_x);
-            float *q = timeImg->ptr<float>(e_y, e_x);
+            c = eventCount->ptr<int>(e_y, e_x);
+            q = timeImg->ptr<float>(e_y, e_x);
             *c += 1;
             *q += (delta_T - *q) / (*c);
         }
@@ -85,6 +98,8 @@ void MotionCompensation::RotationalCompensation(cv::Mat *timeImg, cv::Mat *event
     int discretized_x = 0;
     int discretized_y = 0;
     dvs_msgs::Event e;
+    int *c;
+    float *q;
 
     for (int i = 0; i < event_size_; i++) {
         e = events_buffer_[i];
@@ -96,7 +111,7 @@ void MotionCompensation::RotationalCompensation(cv::Mat *timeImg, cv::Mat *event
             rotation_vector = omega_avg_ * delta_T;
             rot_skew_matrix = Vector2SkewMatrix(rotation_vector);
             rotation_matrix_ = rot_skew_matrix.exp();
-            rot_K = event_camera_K_ * rotation_matrix_.transpose() * event_caemra_K_inverse_;
+            rot_K = event_camera_K_ * rotation_matrix_.transpose() * event_camera_K_inverse_;
         }
 
         /* prepare event vector */
@@ -110,8 +125,8 @@ void MotionCompensation::RotationalCompensation(cv::Mat *timeImg, cv::Mat *event
         discretized_y = static_cast<int>(event_vector[1]);
 
         if (IsWithinTheBoundary(discretized_x, discretized_y)) {
-            int *c = eventCount->ptr<int>(discretized_y, discretized_x);
-            float *q = timeImg->ptr<float>(discretized_y, discretized_x);
+            c = eventCount->ptr<int>(discretized_y, discretized_x);
+            q = timeImg->ptr<float>(discretized_y, discretized_x);
             *c += 1;
             *q += (delta_T - *q) / (*c);
         }
@@ -145,14 +160,14 @@ void MotionCompensation::MorphologicalOperation(cv::Mat *timeImg) {
     tmp_img.convertTo(*timeImg, CV_8UC1);
 }
 
-void MotionCompensation::VisualizeEventImg(const cv::Mat eventImg) {
+void MotionCompensation::Visualization(const cv::Mat eventImg, const string windowName) {
     cv::Mat tmp_img, display_img;
     cv::normalize(eventImg, tmp_img, 0, 255, cv::NORM_MINMAX);
     tmp_img.convertTo(tmp_img, CV_8UC1);
     cv::applyColorMap(tmp_img, display_img, cv::COLORMAP_JET);
 
-    cv::namedWindow("Time Image");
-    cv::imshow( "window", display_img);
+    cv::namedWindow(windowName, CV_WINDOW_NORMAL);
+    cv::imshow(windowName, display_img);
     cv::waitKey(0);
 }
 

@@ -6,12 +6,14 @@
 #include <string>
 #include <cmath>
 #include <vector>
+#include <algorithm>
 
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Geometry>
 #include <eigen3/unsupported/Eigen/MatrixFunctions>
 #include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui_c.h>
 
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
@@ -29,7 +31,7 @@ private:
 
     /* parameters */
     Eigen::Matrix3f event_camera_K_;    // event camera's instrinstic matrix
-    Eigen::Matrix3f event_caemra_K_inverse_;
+    Eigen::Matrix3f event_camera_K_inverse_;
 
     // threshold parameters
     const float threshold_a_ = 0.0;
@@ -67,7 +69,11 @@ private:
 public:
     typedef std::unique_ptr<MotionCompensation> Ptr;
 
-    MotionCompensation(){}
+    MotionCompensation(){
+        event_camera_K_ << 5.3633325932983780e+02, 0, 3.2090009280822994e+02, 0,
+            5.3631797700847164e+02, 2.3404853514480661e+02, 0, 0, 1;
+        event_camera_K_inverse_ = event_camera_K_.inverse();
+    }
     ~MotionCompensation(){}
 
     void MotionCompensate();
@@ -87,7 +93,7 @@ public:
     void MorphologicalOperation(cv::Mat *timeImg);
 
     /* display the effect of motion compensation */
-    void VisualizeEventImg(const cv::Mat eventImg);
+    void Visualization(const cv::Mat eventImg, const string windowName);
 
     cv::Mat GetSourceTimeFrame(void) { return source_time_frame_; }
     cv::Mat GetSourceEventCount(void) { return source_event_count_; }

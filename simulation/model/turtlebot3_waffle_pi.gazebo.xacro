@@ -150,8 +150,8 @@
       <camera name='__default__'>
         <horizontal_fov>1.8</horizontal_fov>
         <image>
-          <width>128</width>
-           <height>128</height>
+          <width>640</width>
+           <height>480</height>
           <!-- <format>R8G8B8</format> -->
         </image>
         <clip>

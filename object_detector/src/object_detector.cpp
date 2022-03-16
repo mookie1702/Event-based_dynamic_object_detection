@@ -30,10 +30,9 @@ void ObjectDetector::EventsCallback(const dvs_msgs::EventArray::ConstPtr &eventM
   motion_compensation_->MotionCompensate();
 
   /* detect objects base on compensated img */
-  cv::Mat compensated_time_img_, event_count_;
-  compensated_time_img_ = motion_compensation_->GetCompensatedTimeImg();
-  event_count_ = motion_compensation_->GetEventCount();
-
+  // cv::Mat compensated_time_img_, event_count_;
+  // compensated_time_img_ = motion_compensation_->GetCompensatedTimeImg();
+  // event_count_ = motion_compensation_->GetEventCount();
 
 }
 
