@@ -1,8 +1,5 @@
 <?xml version="1.0"?>
 <robot name="turtlebot3_waffle_pi_sim" xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:arg name="camera_visual" default="false"/>
-  <xacro:arg name="imu_visual"    default="false"/>
-
   <gazebo reference="base_link">
     <material>Gazebo/DarkGrey</material>
   </gazebo>
@@ -49,14 +46,6 @@
     <material>Gazebo/FlatBlack</material>
   </gazebo>
 
-  <gazebo reference="imu_link">
-    <sensor type="imu" name="imu">
-      <always_on>true</always_on>
-      <visualize>$(arg imu_visual)</visualize>
-    </sensor>
-    <material>Gazebo/Grey</material>
-  </gazebo>
-
   <gazebo>
     <plugin name="turtlebot3_waffle_pi_controller" filename="libgazebo_ros_diff_drive.so">
       <commandTopic>cmd_vel</commandTopic>
@@ -78,6 +67,14 @@
       <wheelTorque>10</wheelTorque>
       <rosDebugLevel>na</rosDebugLevel>
     </plugin>
+  </gazebo>
+
+  <gazebo reference="imu_link">
+    <sensor type="imu" name="imu">
+      <always_on>true</always_on>
+      <visualize>true</visualize>
+    </sensor>
+    <material>Gazebo/SkyBlue</material>
   </gazebo>
 
   <gazebo>
@@ -109,15 +106,15 @@
     </plugin>
   </gazebo>
 
-<!--link : https://www.raspberrypi.org/documentation/hardware/camera/-->
-  <gazebo reference="camera_rgb_frame">
+  <!--link : https://www.raspberrypi.org/documentation/hardware/camera/-->
+  <gazebo reference="camera_link">
+    <material>Gazebo/Yellow</material>
     <sensor type="camera" name="camera1">
-      <!-- <update_rate>30.0</update_rate> -->
       <camera name='__default__'>
         <horizontal_fov>1.8</horizontal_fov>
         <image>
           <width>640</width>
-           <height>480</height>
+          <height>480</height>
           <!-- <format>R8G8B8</format> -->
         </image>
         <clip>
@@ -131,27 +128,16 @@
         </noise> -->
       </camera>
       <update_rate>60</update_rate>
-        <alwaysOn>1</alwaysOn>
-         <visualize>0</visualize>
+      <alwaysOn>true</alwaysOn>
+      <visualize>true</visualize>
+
       <plugin name="camera_controller" filename="/usr/local/lib/libgazebo_dvs_plugin.so">
-        <!-- <alwaysOn>true</alwaysOn> -->
-        <!-- <alwaysOn>1</alwaysOn> -->
-        <!-- <update_rate>60</update_rate> -->
-         <!-- <visualize>0</visualize> -->
-        <!-- <updateRate>0.0</updateRate> -->
         <eventThreshold>10</eventThreshold>
         <cameraName>camera1</cameraName>
         <robotNamespace>/</robotNamespace>
-        <!-- <imageTopicName>image_raw</imageTopicName> -->
         <eventsTopicName>events</eventsTopicName>
         <cameraInfoTopicName>camera_info</cameraInfoTopicName>
         <!-- <frameName>camera_rgb_optical_frame</frameName> -->
-        <!-- <hackBaseline>0.07</hackBaseline> -->
-        <!-- <distortionK1>0.0</distortionK1> -->
-        <!-- <distortionK2>0.0</distortionK2> -->
-        <!-- <distortionK3>0.0</distortionK3> -->
-        <!-- <distortionT1>0.0</distortionT1> -->
-        <!-- <distortionT2>0.0</distortionT2> -->
       </plugin>
 
       <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
@@ -165,9 +151,7 @@
         <distortionT1>0.0</distortionT1>
         <distortionT2>0.0</distortionT2>
       </plugin>
-
     </sensor>
   </gazebo>
-
 
 </robot>
