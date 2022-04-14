@@ -32,17 +32,17 @@ void MotionCompensation::ClearData() {
     event_count_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_8UC1);
 }
 
-void MotionCompensation::LoadIMUs(const sensor_msgs::ImuConstPtr &imuMsg) {
-    IMU_buffer_.push_back(*imuMsg);
+void MotionCompensation::LoadIMUs(const sensor_msgs::ImuConstPtr &imu_msg) {
+    IMU_buffer_.push_back(*imu_msg);
 }
 
-void MotionCompensation::LoadEvents(const dvs_msgs::EventArray::ConstPtr &eventMsg) {
-    events_buffer_.assign(eventMsg->events.begin(), eventMsg->events.end());
+void MotionCompensation::LoadEvents(const dvs_msgs::EventArray::ConstPtr &event_msg) {
+    events_buffer_.assign(event_msg->events.begin(), event_msg->events.end());
     event_size_ = events_buffer_.size();
 }
 
-void MotionCompensation::LoadOdometry(const nav_msgs::Odometry::ConstPtr &odomMsg) {
-    odoms_buffer_ = *odomMsg;
+void MotionCompensation::LoadOdometry(const nav_msgs::Odometry::ConstPtr &odom_msg) {
+    odoms_buffer_ = *odom_msg;
 }
 
 void MotionCompensation::AvgIMU() {
@@ -61,7 +61,7 @@ void MotionCompensation::AvgIMU() {
     }
 }
 
-void MotionCompensation::AccumulateEvents(cv::Mat *timeImg, cv::Mat *eventCount){
+void MotionCompensation::AccumulateEvents(cv::Mat *time_img, cv::Mat *event_count){
     auto t0 = events_buffer_[0].ts;
     dvs_msgs::Event e;
     float delta_T = 0.0f;
@@ -78,15 +78,15 @@ void MotionCompensation::AccumulateEvents(cv::Mat *timeImg, cv::Mat *eventCount)
         if (!IsWithinTheBoundary(e_x, e_y)) {
             continue;
         } else {
-            c = eventCount->ptr<int>(e_y, e_x);
-            q = timeImg->ptr<float>(e_y, e_x);
+            c = event_count->ptr<int>(e_y, e_x);
+            q = time_img->ptr<float>(e_y, e_x);
             *c += 1;
             *q += (delta_T - *q) / (*c);
         }
     }
 }
 
-void MotionCompensation::RotationalCompensation(cv::Mat *timeImg, cv::Mat *eventCount) {
+void MotionCompensation::RotationalCompensation(cv::Mat *time_img, cv::Mat *event_count) {
     Eigen::Vector3f rotation_vector;
     Eigen::Vector3f event_vector;
     Eigen::Matrix3f rot_K;
@@ -111,7 +111,7 @@ void MotionCompensation::RotationalCompensation(cv::Mat *timeImg, cv::Mat *event
             rotation_vector = omega_avg_ * delta_T;
             rot_skew_matrix = Vector2SkewMatrix(rotation_vector);
             rotation_matrix_ = rot_skew_matrix.exp();
-            rot_K = event_camera_K_ * rotation_matrix_.transpose() * event_camera_K_inverse_;
+            rot_K = k_event_camera_K_ * rotation_matrix_.transpose() * k_event_camera_K_inverse_;
         }
 
         /* prepare event vector */
@@ -125,15 +125,15 @@ void MotionCompensation::RotationalCompensation(cv::Mat *timeImg, cv::Mat *event
         discretized_y = static_cast<int>(event_vector[1]);
 
         if (IsWithinTheBoundary(discretized_x, discretized_y)) {
-            c = eventCount->ptr<int>(discretized_y, discretized_x);
-            q = timeImg->ptr<float>(discretized_y, discretized_x);
+            c = event_count->ptr<int>(discretized_y, discretized_x);
+            q = time_img->ptr<float>(discretized_y, discretized_x);
             *c += 1;
             *q += (delta_T - *q) / (*c);
         }
     }
 }
 
-void MotionCompensation::MorphologicalOperation(cv::Mat *timeImg) {
+void MotionCompensation::MorphologicalOperation(cv::Mat *time_img) {
     cv::Mat threshold_img;
     cv::Mat tmp_img;
     cv::Mat normalized_time_img = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
@@ -157,17 +157,17 @@ void MotionCompensation::MorphologicalOperation(cv::Mat *timeImg) {
     /* element-wise square to enhance the img contrast */
     tmp_img = tmp_img.mul(tmp_img);
     cv::normalize(tmp_img, tmp_img, 0, 255, cv::NORM_MINMAX);
-    tmp_img.convertTo(*timeImg, CV_8UC1);
+    tmp_img.convertTo(*time_img, CV_8UC1);
 }
 
-void MotionCompensation::Visualization(const cv::Mat eventImg, const string windowName) {
+void MotionCompensation::Visualization(const cv::Mat event_img, const string window_name) {
     cv::Mat tmp_img, display_img;
-    cv::normalize(eventImg, tmp_img, 0, 255, cv::NORM_MINMAX);
+    cv::normalize(event_img, tmp_img, 0, 255, cv::NORM_MINMAX);
     tmp_img.convertTo(tmp_img, CV_8UC1);
     cv::applyColorMap(tmp_img, display_img, cv::COLORMAP_JET);
 
-    cv::namedWindow(windowName, CV_WINDOW_NORMAL);
-    cv::imshow(windowName, display_img);
+    cv::namedWindow(window_name, CV_WINDOW_NORMAL);
+    cv::imshow(window_name, display_img);
     cv::waitKey(0);
 }
 
