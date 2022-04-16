@@ -30,7 +30,6 @@ private:
     cv::Mat compensated_time_img_;
     cv::Mat gray_img_;
 
-
 public:
     typedef std::unique_ptr<ObjectSegmentation> Ptr;
 

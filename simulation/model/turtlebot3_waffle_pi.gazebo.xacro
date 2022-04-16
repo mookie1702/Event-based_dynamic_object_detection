@@ -127,7 +127,7 @@
           <stddev>0.007</stddev>
         </noise> -->
       </camera>
-      <update_rate>60</update_rate>
+      <update_rate>100</update_rate>
       <alwaysOn>true</alwaysOn>
       <visualize>true</visualize>
 

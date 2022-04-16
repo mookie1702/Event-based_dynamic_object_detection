@@ -1,4 +1,3 @@
-#include <ros/ros.h>
 #include "motion_compensation.h"
 
 inline bool MotionCompensation::IsWithinTheBoundary(const int &x, const int &y) {
@@ -7,14 +6,13 @@ inline bool MotionCompensation::IsWithinTheBoundary(const int &x, const int &y) 
 
 void MotionCompensation::MotionCompensate() {
     ClearData();
-    AvgIMU();
+    GetAvgIMU();
 
     AccumulateEvents(&source_time_frame_, &source_event_count_);
     Visualization(source_time_frame_, "source_time_frame_");
 
     RotationalCompensation(&time_img_, &event_count_);
     MorphologicalOperation(&compensated_time_img_);
-
     Visualization(compensated_time_img_, "compensated_time_img_");
 
     ROS_INFO("The compensation has been completed!");
@@ -45,7 +43,7 @@ void MotionCompensation::LoadOdometry(const nav_msgs::Odometry::ConstPtr &odom_m
     odoms_buffer_ = *odom_msg;
 }
 
-void MotionCompensation::AvgIMU() {
+void MotionCompensation::GetAvgIMU() {
     omega_avg_.setZero();
     imu_size_ = IMU_buffer_.size();
     if (imu_size_ <= 0) {
@@ -89,15 +87,17 @@ void MotionCompensation::AccumulateEvents(cv::Mat *time_img, cv::Mat *event_coun
 void MotionCompensation::RotationalCompensation(cv::Mat *time_img, cv::Mat *event_count) {
     Eigen::Vector3f rotation_vector;
     Eigen::Vector3f event_vector;
-    Eigen::Matrix3f rot_K;
     Eigen::Matrix3f rot_skew_matrix;
+    Eigen::Matrix3f rot_K;
 
     auto t0 = events_buffer_[0].ts;
     float pre_delta_T = 0.0f;
     float delta_T = 0.0f;
+
     int discretized_x = 0;
     int discretized_y = 0;
     dvs_msgs::Event e;
+
     int *c;
     float *q;
 
@@ -118,7 +118,7 @@ void MotionCompensation::RotationalCompensation(cv::Mat *time_img, cv::Mat *even
         event_vector[0] = e.x;
         event_vector[1] = e.y;
         event_vector[2] = 1;
-        event_vector = rot_K * event_vector;    // warping
+        event_vector = rot_K * event_vector;
         ConvertToHomogeneous(event_vector);
 
         discretized_x = static_cast<int>(event_vector[0]);

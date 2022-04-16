@@ -8,6 +8,7 @@
 #include <vector>
 #include <algorithm>
 
+#include <ros/ros.h>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Geometry>
@@ -34,8 +35,8 @@ private:
     Eigen::Matrix3f k_event_camera_K_inverse_;
 
     // threshold parameters
-    const float threshold_a_ = 0.0;
-    const float threshold_b_ = 0.0;
+    const float threshold_a_ = 0.0f;
+    const float threshold_b_ = 0.2f;
     float omega_ = 0.0f;
 
     // Mophology operation parameters
@@ -90,7 +91,7 @@ public:
     void LoadEvents(const dvs_msgs::EventArray::ConstPtr &event_msg);
     void LoadOdometry(const nav_msgs::Odometry::ConstPtr &odom_msg);
 
-    void AvgIMU();
+    void GetAvgIMU();
     void AccumulateEvents(cv::Mat *time_img, cv::Mat *event_count);
 
     void RotationalCompensation(cv::Mat *time_img, cv::Mat *event_count);
