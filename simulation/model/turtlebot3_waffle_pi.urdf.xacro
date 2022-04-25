@@ -211,12 +211,4 @@
 		</collision>
   </link>
 
-  <!-- <joint name="camera_rgb_optical_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="-1.57 0 -1.57"/>
-    <parent link="camera_rgb_frame"/>
-    <child link="camera_rgb_optical_frame"/>
-  </joint>
-
-  <link name="camera_rgb_optical_frame"/> -->
-
 </robot>

@@ -9,16 +9,15 @@ void MotionCompensation::MotionCompensate() {
     GetAvgIMU();
 
     AccumulateEvents(&source_time_frame_, &source_event_count_);
+
     Visualization(source_time_frame_, "source_time_frame_");
 
     RotationalCompensation(&time_img_, &event_count_);
     MorphologicalOperation(&compensated_time_img_);
     Visualization(compensated_time_img_, "compensated_time_img_");
 
-    ROS_INFO("The compensation has been completed!");
-
     IMU_buffer_.clear();
-    events_buffer_.clear();
+    event_buffer_.clear();
 }
 
 void MotionCompensation::ClearData() {
@@ -30,17 +29,17 @@ void MotionCompensation::ClearData() {
     event_count_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_8UC1);
 }
 
-void MotionCompensation::LoadIMUs(const sensor_msgs::ImuConstPtr &imu_msg) {
+void MotionCompensation::LoadIMU(const sensor_msgs::ImuConstPtr &imu_msg) {
     IMU_buffer_.push_back(*imu_msg);
 }
 
-void MotionCompensation::LoadEvents(const dvs_msgs::EventArray::ConstPtr &event_msg) {
-    events_buffer_.assign(event_msg->events.begin(), event_msg->events.end());
-    event_size_ = events_buffer_.size();
+void MotionCompensation::LoadEvent(const dvs_msgs::EventArray::ConstPtr &event_msg) {
+    event_buffer_.assign(event_msg->events.begin(), event_msg->events.end());
+    event_size_ = event_buffer_.size();
 }
 
 void MotionCompensation::LoadOdometry(const nav_msgs::Odometry::ConstPtr &odom_msg) {
-    odoms_buffer_ = *odom_msg;
+    odom_buffer_ = *odom_msg;
 }
 
 void MotionCompensation::GetAvgIMU() {
@@ -60,7 +59,7 @@ void MotionCompensation::GetAvgIMU() {
 }
 
 void MotionCompensation::AccumulateEvents(cv::Mat *time_img, cv::Mat *event_count){
-    auto t0 = events_buffer_[0].ts;
+    auto t0 = event_buffer_[0].ts;
     dvs_msgs::Event e;
     float delta_T = 0.0f;
     int e_x = 0, e_y = 0;
@@ -68,7 +67,7 @@ void MotionCompensation::AccumulateEvents(cv::Mat *time_img, cv::Mat *event_coun
     float *q;
 
     for (int i = 0; i < event_size_; i++) {
-        e = events_buffer_[i];
+        e = event_buffer_[i];
         delta_T = (e.ts - t0).toSec();
         e_x = e.x;
         e_y = e.y;
@@ -90,7 +89,7 @@ void MotionCompensation::RotationalCompensation(cv::Mat *time_img, cv::Mat *even
     Eigen::Matrix3f rot_skew_matrix;
     Eigen::Matrix3f rot_K;
 
-    auto t0 = events_buffer_[0].ts;
+    auto t0 = event_buffer_[0].ts;
     float pre_delta_T = 0.0f;
     float delta_T = 0.0f;
 
@@ -102,7 +101,7 @@ void MotionCompensation::RotationalCompensation(cv::Mat *time_img, cv::Mat *even
     float *q;
 
     for (int i = 0; i < event_size_; i++) {
-        e = events_buffer_[i];
+        e = event_buffer_[i];
         delta_T = (e.ts - t0).toSec();
 
         /* prepare rotation matrix */

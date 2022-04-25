@@ -44,16 +44,14 @@ private:
 
     /* data */
     vector<sensor_msgs::Imu> IMU_buffer_;
-    vector<dvs_msgs::Event> events_buffer_;
-    nav_msgs::Odometry odoms_buffer_;
+    vector<dvs_msgs::Event> event_buffer_;
+    nav_msgs::Odometry odom_buffer_;
 
     // cv::Mat depth_img_;
     cv::Mat source_time_frame_;
     cv::Mat source_event_count_;
-
-    cv::Mat time_img_;     // mean-time image
-    cv::Mat event_count_;  // the img that counts events in each pixel
-
+    cv::Mat time_img_;
+    cv::Mat event_count_;
     cv::Mat compensated_time_img_;
 
     /* utilities */
@@ -87,8 +85,8 @@ public:
     void MotionCompensate();
 
     void ClearData();
-    void LoadIMUs(const sensor_msgs::ImuConstPtr &imu_msg);
-    void LoadEvents(const dvs_msgs::EventArray::ConstPtr &event_msg);
+    void LoadIMU(const sensor_msgs::ImuConstPtr &imu_msg);
+    void LoadEvent(const dvs_msgs::EventArray::ConstPtr &event_msg);
     void LoadOdometry(const nav_msgs::Odometry::ConstPtr &odom_msg);
 
     void GetAvgIMU();
@@ -110,6 +108,5 @@ public:
     Eigen::Matrix3f Vector2SkewMatrix(Eigen::Vector3f v);
     void ConvertToHomogeneous(Eigen::Vector3f &v);
 };
-
 
 #endif

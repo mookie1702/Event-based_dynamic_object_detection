@@ -1,5 +1,4 @@
 running_envrionment: "simulation"
-raw_image_topic: "/camera1/rgb/image_raw"
 event_topic: "/camera1/events"
 imu_topic: "/imu"
 odometry_topic: "/odom"

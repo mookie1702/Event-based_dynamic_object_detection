@@ -28,13 +28,11 @@ private:
     /* data */
     cv::Mat event_counts_;
     cv::Mat compensated_time_img_;
-    cv::Mat gray_img_;
 
 public:
     typedef std::unique_ptr<ObjectSegmentation> Ptr;
 
     ObjectSegmentation() {
-        gray_img_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_8UC1);
     }
     ~ObjectSegmentation() {}
 
