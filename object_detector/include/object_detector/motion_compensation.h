@@ -35,8 +35,8 @@ private:
     Eigen::Matrix3f k_event_camera_K_inverse_;
 
     // threshold parameters
-    const float threshold_a_ = 0.0f;
-    const float threshold_b_ = 0.2f;
+    const float threshold_a_ = 0.2f;
+    const float threshold_b_ = -0.1f;
     float omega_ = 0.0f;
 
     // Mophology operation parameters
@@ -98,11 +98,11 @@ public:
     /* display the effect of motion compensation */
     void Visualization(const cv::Mat event_img, const string window_name);
 
-    cv::Mat GetSourceTimeFrame(void) { return source_time_frame_; }
-    cv::Mat GetSourceEventCount(void) { return source_event_count_; }
-    cv::Mat GetTimeImage(void) { return time_img_; }
-    cv::Mat GetEventCount(void) { return event_count_; }
-    cv::Mat GetCompensatedTimeImg(void) { return compensated_time_img_; }
+    cv::Mat GetSourceTimeFrame() { return source_time_frame_; }
+    cv::Mat GetSourceEventCount() { return source_event_count_; }
+    cv::Mat GetTimeImage() { return time_img_; }
+    cv::Mat GetEventCount() { return event_count_; }
+    cv::Mat GetCompensatedTimeImg() { return compensated_time_img_; }
 
     /* self-defined math functions */
     Eigen::Matrix3f Vector2SkewMatrix(Eigen::Vector3f v);

@@ -9,12 +9,11 @@ void MotionCompensation::MotionCompensate() {
     GetAvgIMU();
 
     AccumulateEvents(&source_time_frame_, &source_event_count_);
-
-    Visualization(source_time_frame_, "source_time_frame_");
+    // Visualization(source_time_frame_, "source_time_frame_");
 
     RotationalCompensation(&time_img_, &event_count_);
     MorphologicalOperation(&compensated_time_img_);
-    Visualization(compensated_time_img_, "compensated_time_img_");
+    // Visualization(compensated_time_img_, "compensated_time_img_");
 
     IMU_buffer_.clear();
     event_buffer_.clear();
@@ -136,6 +135,7 @@ void MotionCompensation::MorphologicalOperation(cv::Mat *time_img) {
     cv::Mat threshold_img;
     cv::Mat tmp_img;
     cv::Mat normalized_time_img = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
+
     cv::normalize(time_img_, normalized_time_img, 0, 1, cv::NORM_MINMAX);
 
     float threshold = cv::mean(normalized_time_img, event_count_)[0] +

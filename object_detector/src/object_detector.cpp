@@ -10,6 +10,7 @@ void ObjectDetector::main() {
   }
 
   motion_compensation_.reset(new MotionCompensation(is_simulation_));
+  object_segmentation_.reset(new ObjectSegmentation());
 
   event_sub_ = nh_.subscribe(k_event_topic_, 2, &ObjectDetector::EventCallback, this);
   imu_sub_ = nh_.subscribe(k_imu_topic_, 10, &ObjectDetector::ImuCallback, this, ros::TransportHints().tcpNoDelay());
@@ -25,12 +26,14 @@ void ObjectDetector::ReadParameters(ros::NodeHandle &n) {
 
 void ObjectDetector::EventCallback(const dvs_msgs::EventArray::ConstPtr &event_msg) {
   motion_compensation_->LoadEvent(event_msg);
+
+  // Motion Compensation
   motion_compensation_->MotionCompensate();
 
   /* detect objects base on compensated img */
-  // cv::Mat compensated_time_img_, event_count_;
-  // compensated_time_img_ = motion_compensation_->GetCompensatedTimeImg();
-  // event_count_ = motion_compensation_->GetEventCount();
+  object_segmentation_->LoadImg(motion_compensation_->GetEventCount(),
+                                motion_compensation_->GetCompensatedTimeImg());
+  object_segmentation_->ObjectSegment();
 }
 
 void ObjectDetector::ImuCallback(const sensor_msgs::ImuConstPtr &imu_msg) {

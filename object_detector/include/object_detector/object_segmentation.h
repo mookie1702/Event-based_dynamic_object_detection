@@ -10,6 +10,8 @@
 #include <eigen3/Eigen/Dense>
 #include <opencv2/opencv.hpp>
 
+#include "dbscan.h"
+
 using namespace std;
 
 #define IMG_ROWS 480
@@ -26,7 +28,7 @@ private:
     const int DBSCAN_MinPts_ = 45;
 
     /* data */
-    cv::Mat event_counts_;
+    cv::Mat event_count_;
     cv::Mat compensated_time_img_;
 
 public:
@@ -37,6 +39,8 @@ public:
     ~ObjectSegmentation() {}
 
     void ObjectSegment();
+    void LoadImg(const cv::Mat &event_count, const cv::Mat &time_img);
+    void LKFlow();
 };
 
 #endif
