@@ -1,7 +1,6 @@
 #ifndef MOTION_COMPENSATION_H
 #define MOTION_COMPENSATION_H
 
-/* INCLUDES */
 #include <iostream>
 #include <string>
 #include <cmath>
@@ -26,10 +25,11 @@ using namespace std;
 #define IMG_ROWS 480
 #define IMG_COLS 640
 
+// #define IMU_BASED
+#define OPTIMIZATION
+
 class MotionCompensation {
 private:
-    /* flags */
-
     /* parameters */
     Eigen::Matrix3f k_event_camera_K_;  // event camera's instrinstic matrix
     Eigen::Matrix3f k_event_camera_K_inverse_;
@@ -47,22 +47,17 @@ private:
     vector<dvs_msgs::Event> event_buffer_;
     nav_msgs::Odometry odom_buffer_;
 
-    // cv::Mat depth_img_;
     cv::Mat source_time_frame_;
     cv::Mat source_event_count_;
     cv::Mat time_img_;
     cv::Mat event_count_;
     cv::Mat compensated_time_img_;
 
-    /* utilities */
     Eigen::Matrix3f rotation_matrix_;
     Eigen::Vector3f omega_avg_;
 
     int event_size_ = 0;
     int imu_size_ = 0;
-
-    /* inline functions */
-    inline bool IsWithinTheBoundary(const int &x, const int &y);
 
 public:
     typedef std::unique_ptr<MotionCompensation> Ptr;
@@ -103,6 +98,9 @@ public:
     cv::Mat GetTimeImage() { return time_img_; }
     cv::Mat GetEventCount() { return event_count_; }
     cv::Mat GetCompensatedTimeImg() { return compensated_time_img_; }
+
+    /* inline functions */
+    inline bool IsWithinTheBoundary(const int &x, const int &y);
 
     /* self-defined math functions */
     Eigen::Matrix3f Vector2SkewMatrix(Eigen::Vector3f v);

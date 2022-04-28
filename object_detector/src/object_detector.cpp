@@ -31,9 +31,9 @@ void ObjectDetector::EventCallback(const dvs_msgs::EventArray::ConstPtr &event_m
   motion_compensation_->MotionCompensate();
 
   /* detect objects base on compensated img */
-  object_segmentation_->LoadImg(motion_compensation_->GetEventCount(),
-                                motion_compensation_->GetCompensatedTimeImg());
-  object_segmentation_->ObjectSegment();
+  // object_segmentation_->LoadImg(motion_compensation_->GetEventCount(),
+  //                               motion_compensation_->GetCompensatedTimeImg());
+  // object_segmentation_->ObjectSegment();
 }
 
 void ObjectDetector::ImuCallback(const sensor_msgs::ImuConstPtr &imu_msg) {

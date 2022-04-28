@@ -1,19 +1,21 @@
 #include "motion_compensation.h"
 
-inline bool MotionCompensation::IsWithinTheBoundary(const int &x, const int &y) {
-  return (x >= 0 && x < IMG_COLS && y >= 0 && y < IMG_ROWS);
-}
-
 void MotionCompensation::MotionCompensate() {
     ClearData();
-    GetAvgIMU();
-
     AccumulateEvents(&source_time_frame_, &source_event_count_);
-    // Visualization(source_time_frame_, "source_time_frame_");
+    Visualization(source_time_frame_, "source_time_frame_");
 
+#ifdef IMU_BASED
+    GetAvgIMU();
     RotationalCompensation(&time_img_, &event_count_);
+    Visualization(time_img_, "time_img_");
     MorphologicalOperation(&compensated_time_img_);
-    // Visualization(compensated_time_img_, "compensated_time_img_");
+    Visualization(compensated_time_img_, "compensated_time_img_");
+#endif
+
+#ifdef OPTIMIZATION
+
+#endif
 
     IMU_buffer_.clear();
     event_buffer_.clear();
@@ -49,8 +51,8 @@ void MotionCompensation::GetAvgIMU() {
     } else {
         for (int i = 0; i < imu_size_; i++) {
             omega_avg_[0] += IMU_buffer_[i].angular_velocity.x;
-            omega_avg_[1] += -IMU_buffer_[i].angular_velocity.y;
-            omega_avg_[2] += -IMU_buffer_[i].angular_velocity.z;
+            omega_avg_[1] += IMU_buffer_[i].angular_velocity.y;
+            omega_avg_[2] += IMU_buffer_[i].angular_velocity.z;
         }
         omega_avg_ = omega_avg_ / static_cast<float>(imu_size_);
         omega_ = omega_avg_.norm();
@@ -145,7 +147,7 @@ void MotionCompensation::MorphologicalOperation(cv::Mat *time_img) {
 
     /* Gaussian Blur */
     cv::blur(threshold_img, tmp_img, cv::Size(5, 5));
-    cv::normalize(tmp_img, tmp_img, 0, 255, cv::NORM_MINMAX);
+    cv::normalize(tmp_img, tmp_img, 0, 1, cv::NORM_MINMAX);
 
     /* Morphological Operation */
     cv::Mat kernel = cv::getStructuringElement(
@@ -155,8 +157,8 @@ void MotionCompensation::MorphologicalOperation(cv::Mat *time_img) {
 
     /* element-wise square to enhance the img contrast */
     tmp_img = tmp_img.mul(tmp_img);
-    cv::normalize(tmp_img, tmp_img, 0, 255, cv::NORM_MINMAX);
-    tmp_img.convertTo(*time_img, CV_8UC1);
+    cv::normalize(tmp_img, tmp_img, 0, 1, cv::NORM_MINMAX);
+    tmp_img.convertTo(*time_img, CV_32FC1);
 }
 
 void MotionCompensation::Visualization(const cv::Mat event_img, const string window_name) {
@@ -168,6 +170,10 @@ void MotionCompensation::Visualization(const cv::Mat event_img, const string win
     cv::namedWindow(window_name, CV_WINDOW_NORMAL);
     cv::imshow(window_name, display_img);
     cv::waitKey(0);
+}
+
+inline bool MotionCompensation::IsWithinTheBoundary(const int &x, const int &y) {
+  return (x >= 0 && x < IMG_COLS && y >= 0 && y < IMG_ROWS);
 }
 
 Eigen::Matrix3f MotionCompensation::Vector2SkewMatrix(Eigen::Vector3f v) {

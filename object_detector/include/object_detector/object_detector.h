@@ -22,7 +22,6 @@
 
 using namespace std;
 
-
 class ObjectDetector {
 private:
     /* flags */
@@ -54,9 +53,7 @@ private:
     /* inline functions */
 
 public:
-    ObjectDetector(ros::NodeHandle &nh) : nh_(nh) {
-
-    }
+    ObjectDetector(ros::NodeHandle &nh) : nh_(nh) {}
     ~ObjectDetector() {}
 
     void main();
