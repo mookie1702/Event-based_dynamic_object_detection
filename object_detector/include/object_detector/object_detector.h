@@ -19,6 +19,7 @@
 
 #include "motion_compensation.h"
 #include "object_segmentation.h"
+#include "motion_estimation.h"
 
 using namespace std;
 
@@ -36,10 +37,10 @@ private:
     /* detecting utilities */
     MotionCompensation::Ptr motion_compensation_;
     ObjectSegmentation::Ptr object_segmentation_;
+    MotionEstimation::Ptr motion_estimation_;
 
     /* ROS utilities */
     ros::NodeHandle &nh_;
-
     ros::Subscriber event_sub_;
     ros::Subscriber imu_sub_;
     ros::Subscriber odom_sub_;

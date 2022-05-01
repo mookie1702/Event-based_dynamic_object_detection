@@ -28,6 +28,13 @@ using namespace std;
 // #define IMU_BASED
 #define OPTIMIZATION
 
+typedef struct M_G_ {
+    float h_x_ = 0.0f;
+    float h_y_ = 0.0f;
+    float h_z_ = 0.0f;
+    float theta_ = 0.0f;
+}WarpParameters;
+
 class MotionCompensation {
 private:
     /* parameters */
@@ -45,6 +52,7 @@ private:
     /* data */
     vector<sensor_msgs::Imu> IMU_buffer_;
     vector<dvs_msgs::Event> event_buffer_;
+    vector<dvs_msgs::Event> warped_event_buffer_;
     nav_msgs::Odometry odom_buffer_;
 
     cv::Mat source_time_frame_;
@@ -58,6 +66,10 @@ private:
 
     int event_size_ = 0;
     int imu_size_ = 0;
+
+    // parameters of optimization method
+    WarpParameters Prev_M_G_, M_G_;
+    const float k_xi_ = 1.0f;
 
 public:
     typedef std::unique_ptr<MotionCompensation> Ptr;
@@ -79,19 +91,25 @@ public:
 
     void MotionCompensate();
 
-    void ClearData();
+    void CleanTimeImgAndEventCount();
     void LoadIMU(const sensor_msgs::ImuConstPtr &imu_msg);
     void LoadEvent(const dvs_msgs::EventArray::ConstPtr &event_msg);
     void LoadOdometry(const nav_msgs::Odometry::ConstPtr &odom_msg);
-
-    void GetAvgIMU();
     void AccumulateEvents(cv::Mat *time_img, cv::Mat *event_count);
 
+    // IMU-based method
+    void GetAvgAngularVelocity();
     void RotationalCompensation(cv::Mat *time_img, cv::Mat *event_count);
     void MorphologicalOperation(cv::Mat *time_img);
 
+    // optimized method
+    void WarpEvent();
+    void GetTimeImg();
+    void UpdateModel();
+    void Optimization();
+
     /* display the effect of motion compensation */
-    void Visualization(const cv::Mat event_img, const string window_name);
+    void Visualization(const cv::Mat img, const string window_name);
 
     cv::Mat GetSourceTimeFrame() { return source_time_frame_; }
     cv::Mat GetSourceEventCount() { return source_event_count_; }

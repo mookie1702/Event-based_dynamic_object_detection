@@ -24,7 +24,7 @@ private:
 
     /* parameters */
     // DBSCAN parameters
-    const float DBSCAN_Eps_ = 3.0;
+    const float DBSCAN_Eps_ = 3.0f;
     const int DBSCAN_MinPts_ = 45;
 
     /* data */

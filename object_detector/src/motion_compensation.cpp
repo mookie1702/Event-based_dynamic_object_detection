@@ -1,27 +1,26 @@
 #include "motion_compensation.h"
 
 void MotionCompensation::MotionCompensate() {
-    ClearData();
+    CleanTimeImgAndEventCount();
     AccumulateEvents(&source_time_frame_, &source_event_count_);
     Visualization(source_time_frame_, "source_time_frame_");
 
 #ifdef IMU_BASED
-    GetAvgIMU();
+    GetAvgAngularVelocity();
     RotationalCompensation(&time_img_, &event_count_);
-    Visualization(time_img_, "time_img_");
     MorphologicalOperation(&compensated_time_img_);
     Visualization(compensated_time_img_, "compensated_time_img_");
 #endif
 
 #ifdef OPTIMIZATION
-
+    Optimization();
 #endif
 
     IMU_buffer_.clear();
     event_buffer_.clear();
 }
 
-void MotionCompensation::ClearData() {
+void MotionCompensation::CleanTimeImgAndEventCount() {
     source_time_frame_  = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
     time_img_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
     compensated_time_img_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
@@ -41,22 +40,6 @@ void MotionCompensation::LoadEvent(const dvs_msgs::EventArray::ConstPtr &event_m
 
 void MotionCompensation::LoadOdometry(const nav_msgs::Odometry::ConstPtr &odom_msg) {
     odom_buffer_ = *odom_msg;
-}
-
-void MotionCompensation::GetAvgIMU() {
-    omega_avg_.setZero();
-    imu_size_ = IMU_buffer_.size();
-    if (imu_size_ <= 0) {
-        omega_ = 0.0f;
-    } else {
-        for (int i = 0; i < imu_size_; i++) {
-            omega_avg_[0] += IMU_buffer_[i].angular_velocity.x;
-            omega_avg_[1] += IMU_buffer_[i].angular_velocity.y;
-            omega_avg_[2] += IMU_buffer_[i].angular_velocity.z;
-        }
-        omega_avg_ = omega_avg_ / static_cast<float>(imu_size_);
-        omega_ = omega_avg_.norm();
-    }
 }
 
 void MotionCompensation::AccumulateEvents(cv::Mat *time_img, cv::Mat *event_count){
@@ -81,6 +64,22 @@ void MotionCompensation::AccumulateEvents(cv::Mat *time_img, cv::Mat *event_coun
             *c += 1;
             *q += (delta_T - *q) / (*c);
         }
+    }
+}
+
+void MotionCompensation::GetAvgAngularVelocity() {
+    omega_avg_.setZero();
+    imu_size_ = IMU_buffer_.size();
+    if (imu_size_ <= 0) {
+        omega_ = 0.0f;
+    } else {
+        for (int i = 0; i < imu_size_; i++) {
+            omega_avg_[0] += IMU_buffer_[i].angular_velocity.x;
+            omega_avg_[1] += IMU_buffer_[i].angular_velocity.y;
+            omega_avg_[2] += IMU_buffer_[i].angular_velocity.z;
+        }
+        omega_avg_ = omega_avg_ / static_cast<float>(imu_size_);
+        omega_ = omega_avg_.norm();
     }
 }
 
@@ -134,15 +133,14 @@ void MotionCompensation::RotationalCompensation(cv::Mat *time_img, cv::Mat *even
 }
 
 void MotionCompensation::MorphologicalOperation(cv::Mat *time_img) {
+    cv::Mat normalized_time_img = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
     cv::Mat threshold_img;
     cv::Mat tmp_img;
-    cv::Mat normalized_time_img = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
 
     cv::normalize(time_img_, normalized_time_img, 0, 1, cv::NORM_MINMAX);
 
     float threshold = cv::mean(normalized_time_img, event_count_)[0] +
                         threshold_a_ * omega_ + threshold_b_;
-
     cv::threshold(normalized_time_img, threshold_img, threshold, 1, cv::THRESH_TOZERO);
 
     /* Gaussian Blur */
@@ -152,21 +150,35 @@ void MotionCompensation::MorphologicalOperation(cv::Mat *time_img) {
     /* Morphological Operation */
     cv::Mat kernel = cv::getStructuringElement(
         cv::MORPH_RECT, cv::Size(kernel_size_, kernel_size_), cv::Point(-1, -1));
-
     cv::morphologyEx(tmp_img, tmp_img, cv::MORPH_OPEN, kernel, cv::Point(-1, -1), 1);
 
     /* element-wise square to enhance the img contrast */
     tmp_img = tmp_img.mul(tmp_img);
     cv::normalize(tmp_img, tmp_img, 0, 1, cv::NORM_MINMAX);
-    tmp_img.convertTo(*time_img, CV_32FC1);
+    *time_img = tmp_img.clone();
 }
 
-void MotionCompensation::Visualization(const cv::Mat event_img, const string window_name) {
+void MotionCompensation::WarpEvent() {
+
+}
+
+void MotionCompensation::GetTimeImg() {
+
+}
+
+void MotionCompensation::UpdateModel() {
+
+}
+
+void MotionCompensation::Optimization() {
+    WarpEvent();
+}
+
+void MotionCompensation::Visualization(const cv::Mat img, const string window_name) {
     cv::Mat tmp_img, display_img;
-    cv::normalize(event_img, tmp_img, 0, 255, cv::NORM_MINMAX);
+    cv::normalize(img, tmp_img, 0, 255, cv::NORM_MINMAX);
     tmp_img.convertTo(tmp_img, CV_8UC1);
     cv::applyColorMap(tmp_img, display_img, cv::COLORMAP_JET);
-
     cv::namedWindow(window_name, CV_WINDOW_NORMAL);
     cv::imshow(window_name, display_img);
     cv::waitKey(0);
