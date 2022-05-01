@@ -9,11 +9,34 @@ void MotionCompensation::MotionCompensate() {
     GetAvgAngularVelocity();
     RotationalCompensation(&time_img_, &event_count_);
     MorphologicalOperation(&compensated_time_img_);
+
     Visualization(compensated_time_img_, "compensated_time_img_");
 #endif
 
 #ifdef OPTIMIZATION
-    Optimization();
+    cv::Mat minus;
+
+    CleanParameter();
+    WarpEventCloud(prev_M_G_);
+    GetTimestampImg(&time_img_, &event_count_);
+    UpdateModel(time_img_, event_count_);
+    while (k_xi_ < sqrt(pow((prev_M_G_.h_x - M_G_.h_x), 2) +
+                        pow((prev_M_G_.h_y - M_G_.h_y), 2) +
+                        pow((prev_M_G_.h_z - M_G_.h_z), 2) +
+                        pow((prev_M_G_.theta - M_G_.theta), 2)))
+    {
+        WarpEventCloud(M_G_);
+        GetTimestampImg(&time_img_, &event_count_);
+        prev_M_G_.h_x = M_G_.h_x;
+        prev_M_G_.h_y = M_G_.h_y;
+        prev_M_G_.h_z = M_G_.h_z;
+        prev_M_G_.theta = M_G_.theta;
+        UpdateModel(time_img_, event_count_);
+        cout << M_G_.h_x << " and " << M_G_.h_y << " and " << M_G_.h_z << " and " << M_G_.theta << endl << endl;
+    }
+
+    Visualization(time_img_, "time_img_");
+    warped_event_buffer_.clear();
 #endif
 
     IMU_buffer_.clear();
@@ -158,20 +181,98 @@ void MotionCompensation::MorphologicalOperation(cv::Mat *time_img) {
     *time_img = tmp_img.clone();
 }
 
-void MotionCompensation::WarpEvent() {
-
+void MotionCompensation::CleanParameter() {
+    M_G_.h_x = 0.0f;
+    M_G_.h_y = 0.0f;
+    M_G_.h_z = 0.0f;
+    M_G_.theta = 0.0f;
+    prev_M_G_.h_x = 0.0f;
+    prev_M_G_.h_y = 0.0f;
+    prev_M_G_.h_z = 0.0f;
+    prev_M_G_.theta = 0.0f;
 }
 
-void MotionCompensation::GetTimeImg() {
+void MotionCompensation::WarpEventCloud(WarpParameter para) {
+    auto t0 = event_buffer_[0].ts;
+    dvs_msgs::Event e;
+    warped_event e1;
+    float e_x = 0.0f, e_y = 0.0f, delta_T = 0.0f;
 
+    for (int i = 0; i < event_size_; i++) {
+        e = event_buffer_[i];
+        delta_T = (e.ts - t0).toSec();
+        e_x = static_cast<float>(e.x);
+        e_y = static_cast<float>(e.y);
+
+        e1.x = e_x - delta_T * (para.h_x + (para.h_z + 1) * (e_x * cos(para.theta) - e_y * sin(para.theta)) - e_x);
+        e1.y = e_y - delta_T * (para.h_y + (para.h_z + 1) * (e_x * sin(para.theta) + e_y * cos(para.theta)) - e_y);
+        e1.ts = delta_T;
+
+        warped_event_buffer_.push_back(e1);
+    }
+    warped_event_size_ = warped_event_buffer_.size();
 }
 
-void MotionCompensation::UpdateModel() {
+void MotionCompensation::GetTimestampImg(cv::Mat *time_img, cv::Mat *event_count) {
+    WarpEvent e;
+    int discretized_x = 0, discretized_y = 0;
+    float t;
+    int *c;
+    float *q;
 
+    for (int i = 0; i < warped_event_size_; i++) {
+        e = warped_event_buffer_[i];
+        discretized_x = static_cast<int>(e.x);
+        discretized_y = static_cast<int>(e.y);
+        t = e.ts;
+
+        if (!IsWithinTheBoundary(discretized_x, discretized_y)) {
+            continue;
+        } else {
+            c = event_count->ptr<int>(discretized_y, discretized_x);
+            q = time_img->ptr<float>(discretized_y, discretized_x);
+            *c += 1;
+            *q += (t - *q) / (*c);
+        }
+    }
 }
 
-void MotionCompensation::Optimization() {
-    WarpEvent();
+void MotionCompensation::UpdateModel(cv::Mat &time_img, cv::Mat &event_count) {
+    float tmp1 = 0.0f, tmp2 = 0.0f;
+    float number_I = 0.0f, alpha = 0.1f;
+    float d_x = 0.0f, d_y = 0.0f, d_z = 0.0f, d_theta = 0.0f;
+    cv::Mat G_x, G_y;
+    float global_error = 0.0f;
+
+    for (int i = 0; i < IMG_ROWS; i++)
+        for (int j = 0; j < IMG_COLS; j++)
+            if (abs(time_img.at<float>(i, j)) >= 1e-6)
+                number_I += 1;
+
+    cv::Sobel(time_img, G_x, CV_32F, 1, 0);
+    cv::Sobel(time_img, G_y, CV_32F, 0, 1);
+
+    d_x = cv::sum(G_x)[0] / number_I;
+    d_y = cv::sum(G_y)[0] / number_I;
+
+    cout << global_error << " and " << number_I << endl;
+
+    for (int i = 0; i < IMG_ROWS; i++) {
+        for (int j = 0; j < IMG_COLS; j++) {
+            tmp1 += G_x.at<float>(i, j) * i + G_y.at<float>(i, j) * j;
+            tmp2 += G_x.at<float>(i, j) * j - G_y.at<float>(i, j) * i;
+            global_error += pow(G_x.at<float>(i, j), 2) + pow(G_y.at<float>(i, j), 2);
+        }
+    }
+    d_z = tmp1 / number_I;
+    d_theta = tmp2 / number_I;
+
+    M_G_.h_x -= d_x * alpha;
+    M_G_.h_y -= d_y * alpha;
+    M_G_.h_z -= d_z * alpha;
+    M_G_.theta -= d_theta * alpha;
+
+    cout << global_error << " and " << number_I << endl;
 }
 
 void MotionCompensation::Visualization(const cv::Mat img, const string window_name) {

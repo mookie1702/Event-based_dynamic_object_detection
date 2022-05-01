@@ -25,15 +25,21 @@ using namespace std;
 #define IMG_ROWS 480
 #define IMG_COLS 640
 
-// #define IMU_BASED
-#define OPTIMIZATION
+#define IMU_BASED
+// #define OPTIMIZATION
 
-typedef struct M_G_ {
-    float h_x_ = 0.0f;
-    float h_y_ = 0.0f;
-    float h_z_ = 0.0f;
-    float theta_ = 0.0f;
-}WarpParameters;
+typedef struct warped_event {
+    float x;
+    float y;
+    float ts;
+} WarpEvent;
+
+typedef struct warped_event_parameter {
+    float h_x = 0.0f;
+    float h_y = 0.0f;
+    float h_z = 0.0f;
+    float theta = 0.0f;
+} WarpParameter;
 
 class MotionCompensation {
 private:
@@ -52,7 +58,6 @@ private:
     /* data */
     vector<sensor_msgs::Imu> IMU_buffer_;
     vector<dvs_msgs::Event> event_buffer_;
-    vector<dvs_msgs::Event> warped_event_buffer_;
     nav_msgs::Odometry odom_buffer_;
 
     cv::Mat source_time_frame_;
@@ -67,9 +72,12 @@ private:
     int event_size_ = 0;
     int imu_size_ = 0;
 
-    // parameters of optimization method
-    WarpParameters Prev_M_G_, M_G_;
-    const float k_xi_ = 1.0f;
+    // optimization method
+    vector<WarpEvent> warped_event_buffer_;
+    int warped_event_size_;
+    WarpParameter prev_M_G_, M_G_;
+    const float k_xi_ = 0.005f;
+    const float k_d_ = 1.0f;
 
 public:
     typedef std::unique_ptr<MotionCompensation> Ptr;
@@ -102,11 +110,11 @@ public:
     void RotationalCompensation(cv::Mat *time_img, cv::Mat *event_count);
     void MorphologicalOperation(cv::Mat *time_img);
 
-    // optimized method
-    void WarpEvent();
-    void GetTimeImg();
-    void UpdateModel();
-    void Optimization();
+    // optimization-based method
+    void CleanParameter();
+    void WarpEventCloud(WarpParameter para);
+    void GetTimestampImg(cv::Mat *time_img, cv::Mat *event_count);
+    void UpdateModel(cv::Mat &time_img, cv::Mat &event_count);
 
     /* display the effect of motion compensation */
     void Visualization(const cv::Mat img, const string window_name);

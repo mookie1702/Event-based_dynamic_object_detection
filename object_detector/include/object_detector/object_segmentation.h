@@ -40,7 +40,7 @@ public:
 
     void ObjectSegment();
     void LoadImg(const cv::Mat &event_count, const cv::Mat &time_img);
-    void LKFlow();
+    void OpticalFlow();
 };
 
 #endif

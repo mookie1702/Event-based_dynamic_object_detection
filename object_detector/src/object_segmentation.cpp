@@ -6,10 +6,10 @@ void ObjectSegmentation::LoadImg(const cv::Mat &event_count, const cv::Mat &time
 }
 
 void ObjectSegmentation::ObjectSegment() {
-    LKFlow();
+    OpticalFlow();
 }
 
-void ObjectSegmentation::LKFlow() {
+void ObjectSegmentation::OpticalFlow() {
     static bool need_find_keypoint = true;
     static list<cv::Point2f> keypoints;
     static cv::Mat last_img, img;
