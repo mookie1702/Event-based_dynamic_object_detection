@@ -51,8 +51,6 @@ private:
     void ImuCallback(const sensor_msgs::ImuConstPtr &imu_msg);
     void OdomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg);
 
-    /* inline functions */
-
 public:
     ObjectDetector(ros::NodeHandle &nh) : nh_(nh) {}
     ~ObjectDetector() {}

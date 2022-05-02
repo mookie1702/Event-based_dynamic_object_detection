@@ -32,7 +32,6 @@ void MotionCompensation::MotionCompensate() {
         prev_M_G_.h_z = M_G_.h_z;
         prev_M_G_.theta = M_G_.theta;
         UpdateModel(time_img_, event_count_);
-        cout << M_G_.h_x << " and " << M_G_.h_y << " and " << M_G_.h_z << " and " << M_G_.theta << endl << endl;
     }
 
     Visualization(time_img_, "time_img_");
@@ -44,7 +43,7 @@ void MotionCompensation::MotionCompensate() {
 }
 
 void MotionCompensation::CleanTimeImgAndEventCount() {
-    source_time_frame_  = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
+    source_time_frame_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
     time_img_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
     compensated_time_img_ = cv::Mat::zeros(cv::Size(IMG_COLS, IMG_ROWS), CV_32FC1);
 
@@ -65,7 +64,7 @@ void MotionCompensation::LoadOdometry(const nav_msgs::Odometry::ConstPtr &odom_m
     odom_buffer_ = *odom_msg;
 }
 
-void MotionCompensation::AccumulateEvents(cv::Mat *time_img, cv::Mat *event_count){
+void MotionCompensation::AccumulateEvents(cv::Mat *time_img, cv::Mat *event_count) {
     auto t0 = event_buffer_[0].ts;
     dvs_msgs::Event e;
     float delta_T = 0.0f;
@@ -163,7 +162,7 @@ void MotionCompensation::MorphologicalOperation(cv::Mat *time_img) {
     cv::normalize(time_img_, normalized_time_img, 0, 1, cv::NORM_MINMAX);
 
     float threshold = cv::mean(normalized_time_img, event_count_)[0] +
-                        threshold_a_ * omega_ + threshold_b_;
+                      threshold_a_ * omega_ + threshold_b_;
     cv::threshold(normalized_time_img, threshold_img, threshold, 1, cv::THRESH_TOZERO);
 
     /* Gaussian Blur */
@@ -286,7 +285,7 @@ void MotionCompensation::Visualization(const cv::Mat img, const string window_na
 }
 
 inline bool MotionCompensation::IsWithinTheBoundary(const int &x, const int &y) {
-  return (x >= 0 && x < IMG_COLS && y >= 0 && y < IMG_ROWS);
+    return (x >= 0 && x < IMG_COLS && y >= 0 && y < IMG_ROWS);
 }
 
 Eigen::Matrix3f MotionCompensation::Vector2SkewMatrix(Eigen::Vector3f v) {

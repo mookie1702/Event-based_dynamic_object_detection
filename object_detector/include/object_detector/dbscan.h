@@ -37,11 +37,10 @@ public:
     typedef std::unique_ptr<DBSCAN> Ptr;
 
     DBSCAN(float eps, unsigned int minpts) : Eps_(eps), MinPts_(minpts) {}
-    ~DBSCAN(){}
+    ~DBSCAN() {}
 
     void GetData(cv::Mat time_img);
     float GetDistance(DataPoint &point1, DataPoint &point2);
-    
 };
 
 #endif

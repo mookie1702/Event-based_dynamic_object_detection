@@ -44,7 +44,7 @@ typedef struct warped_event_parameter {
 class MotionCompensation {
 private:
     /* parameters */
-    Eigen::Matrix3f k_event_camera_K_;  // event camera's instrinstic matrix
+    Eigen::Matrix3f k_event_camera_K_; // event camera's instrinstic matrix
     Eigen::Matrix3f k_event_camera_K_inverse_;
 
     // threshold parameters
@@ -82,20 +82,20 @@ private:
 public:
     typedef std::unique_ptr<MotionCompensation> Ptr;
 
-    MotionCompensation(bool is_simulation){
+    MotionCompensation(bool is_simulation) {
         if (is_simulation) {
             k_event_camera_K_ << 2.5393636730954148e+02, 0.0, 3.205e+02,
-                                 0.0, 2.5393636730954148e+02, 2.405e+02,
-                                 0.0, 0.0, 1.0;
+                0.0, 2.5393636730954148e+02, 2.405e+02,
+                0.0, 0.0, 1.0;
             k_event_camera_K_inverse_ = k_event_camera_K_.inverse();
         } else {
             k_event_camera_K_ << 5.3633325932983780e+02, 0, 3.2090009280822994e+02,
-                                 0, 5.3631797700847164e+02, 2.3404853514480661e+02,
-                                 0, 0, 1;
+                0, 5.3631797700847164e+02, 2.3404853514480661e+02,
+                0, 0, 1;
             k_event_camera_K_inverse_ = k_event_camera_K_.inverse();
         }
     }
-    ~MotionCompensation(){}
+    ~MotionCompensation() {}
 
     void MotionCompensate();
 

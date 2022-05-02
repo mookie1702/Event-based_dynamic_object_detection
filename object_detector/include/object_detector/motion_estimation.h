@@ -11,7 +11,6 @@ using namespace std;
 
 class MotionEstimation {
 private:
-
 public:
     typedef std::unique_ptr<MotionEstimation> Ptr;
 
