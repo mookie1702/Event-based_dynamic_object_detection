@@ -29,18 +29,19 @@ private:
 
     /* data */
     cv::Mat event_count_;
-    cv::Mat compensated_time_img_;
+    cv::Mat compensated_img_;
+    cv::Mat flow_data_;
 
 public:
     typedef std::unique_ptr<ObjectSegmentation> Ptr;
 
-    ObjectSegmentation() {
-    }
+    ObjectSegmentation() {}
     ~ObjectSegmentation() {}
 
     void ObjectSegment();
     void LoadImg(const cv::Mat &event_count, const cv::Mat &time_img);
-    void OpticalFlow();
+    void CalcLKOpticalFlow();
+    void CalcFarnebackOpticalFlow();
 };
 
 #endif

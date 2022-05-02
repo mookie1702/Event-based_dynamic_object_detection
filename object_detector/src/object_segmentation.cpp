@@ -2,19 +2,20 @@
 
 void ObjectSegmentation::LoadImg(const cv::Mat &event_count, const cv::Mat &time_img) {
     event_count_ = event_count;
-    compensated_time_img_ = time_img;
+    cv::normalize(time_img, compensated_img_, 0, 255, cv::NORM_MINMAX);
+    compensated_img_.convertTo(compensated_img_, CV_8UC1);
 }
 
 void ObjectSegmentation::ObjectSegment() {
-    OpticalFlow();
+    CalcFarnebackOpticalFlow();
 }
 
-void ObjectSegmentation::OpticalFlow() {
+void ObjectSegmentation::CalcLKOpticalFlow() {
     static bool need_find_keypoint = true;
     static list<cv::Point2f> keypoints;
     static cv::Mat last_img, img;
 
-    img = compensated_time_img_.clone();
+    img = compensated_img_.clone();
 
     if (need_find_keypoint) {
         // detect Fast Feature in the first frame.
@@ -59,4 +60,33 @@ void ObjectSegmentation::OpticalFlow() {
     cv::waitKey(0);
 
     last_img = img;
+}
+
+void ObjectSegmentation::CalcFarnebackOpticalFlow() {
+    static bool first_runing = true;
+    static cv::Mat last_img, img;
+
+    img = compensated_img_.clone();
+
+    if (first_runing) {
+        last_img = img;
+        first_runing = false;
+        return;
+    }
+
+    cv::calcOpticalFlowFarneback(last_img, img, flow_data_, 0.5, 3, 15, 3, 5, 1.2, 0);
+    last_img = img;
+
+    /* display the effect of optical flow. */
+    // cv::Mat img_show;
+    // img_show = img.clone();
+    // for (int y = 0; y < img_show.rows; y += 16) {
+    //     for (int x = 0; x < img_show.cols; x += 16) {
+    //         const cv::Point2f &fxy = flow_data_.at<cv::Point2f>(y, x);
+    //         line(img_show, cv::Point(x, y), cv::Point(cvRound(x + fxy.x), cvRound(y + fxy.y)), cv::Scalar(255, 255, 255));
+    //         cv::circle(img_show, cv::Point(x, y), 2, cv::Scalar(255, 255, 255), -1);
+    //     }
+    // }
+    // cv::imshow("Farneback_Optical_Flow", img_show);
+    // cv::waitKey(0);
 }
