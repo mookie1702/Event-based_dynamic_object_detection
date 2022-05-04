@@ -14,12 +14,15 @@ void MotionCompensation::MotionCompensate() {
 #endif
 
 #ifdef OPTIMIZATION
-    cv::Mat minus;
+    int img_cols = static_cast<int>(IMG_COLS / k_d_) + 1;
+    int img_rows = static_cast<int>(IMG_ROWS / k_d_) + 1;
+    time_img_ = cv::Mat::zeros(cv::Size(img_cols, img_rows), CV_32FC1);
+    event_count_ = cv::Mat::zeros(cv::Size(img_cols, img_rows), CV_8UC1);
 
-    CleanParameter();
+    CleanWarpParameter();
     WarpEventCloud(prev_M_G_);
     GetTimestampImg(&time_img_, &event_count_);
-    UpdateModel(time_img_, event_count_);
+    UpdateModel(time_img_);
     while (k_xi_ < sqrt(pow((prev_M_G_.h_x - M_G_.h_x), 2) +
                         pow((prev_M_G_.h_y - M_G_.h_y), 2) +
                         pow((prev_M_G_.h_z - M_G_.h_z), 2) +
@@ -31,7 +34,7 @@ void MotionCompensation::MotionCompensate() {
         prev_M_G_.h_y = M_G_.h_y;
         prev_M_G_.h_z = M_G_.h_z;
         prev_M_G_.theta = M_G_.theta;
-        UpdateModel(time_img_, event_count_);
+        UpdateModel(time_img_);
     }
 
     Visualization(time_img_, "time_img_");
@@ -60,10 +63,6 @@ void MotionCompensation::LoadEvent(const dvs_msgs::EventArray::ConstPtr &event_m
     event_size_ = event_buffer_.size();
 }
 
-void MotionCompensation::LoadOdometry(const nav_msgs::Odometry::ConstPtr &odom_msg) {
-    odom_buffer_ = *odom_msg;
-}
-
 void MotionCompensation::AccumulateEvents(cv::Mat *time_img, cv::Mat *event_count) {
     auto t0 = event_buffer_[0].ts;
     dvs_msgs::Event e;
@@ -78,7 +77,7 @@ void MotionCompensation::AccumulateEvents(cv::Mat *time_img, cv::Mat *event_coun
         e_x = e.x;
         e_y = e.y;
 
-        if (!IsWithinTheBoundary(e_x, e_y)) {
+        if (!IsWithinTheBoundary(e_x, e_y, *time_img)) {
             continue;
         } else {
             c = event_count->ptr<int>(e_y, e_x);
@@ -89,6 +88,7 @@ void MotionCompensation::AccumulateEvents(cv::Mat *time_img, cv::Mat *event_coun
     }
 }
 
+#ifdef IMU_BASED
 void MotionCompensation::GetAvgAngularVelocity() {
     omega_avg_.setZero();
     imu_size_ = IMU_buffer_.size();
@@ -179,8 +179,11 @@ void MotionCompensation::MorphologicalOperation(cv::Mat *time_img) {
     cv::normalize(tmp_img, tmp_img, 0, 1, cv::NORM_MINMAX);
     *time_img = tmp_img.clone();
 }
+#endif
 
-void MotionCompensation::CleanParameter() {
+
+#ifdef OPTIMIZATION
+void MotionCompensation::CleanWarpParameter() {
     M_G_.h_x = 0.0f;
     M_G_.h_y = 0.0f;
     M_G_.h_z = 0.0f;
@@ -213,32 +216,34 @@ void MotionCompensation::WarpEventCloud(WarpParameter para) {
 }
 
 void MotionCompensation::GetTimestampImg(cv::Mat *time_img, cv::Mat *event_count) {
-    WarpEvent e;
+    WarpedEvent e;
     int discretized_x = 0, discretized_y = 0;
-    float t;
     int *c;
     float *q;
 
     for (int i = 0; i < warped_event_size_; i++) {
         e = warped_event_buffer_[i];
-        discretized_x = static_cast<int>(e.x);
-        discretized_y = static_cast<int>(e.y);
-        t = e.ts;
+        discretized_x = static_cast<int>(e.x / k_d_) + 1;
+        discretized_y = static_cast<int>(e.y / k_d_) + 1;
 
-        if (!IsWithinTheBoundary(discretized_x, discretized_y)) {
+        if (!IsWithinTheBoundary(discretized_x, discretized_y, *time_img)) {
             continue;
         } else {
             c = event_count->ptr<int>(discretized_y, discretized_x);
             q = time_img->ptr<float>(discretized_y, discretized_x);
             *c += 1;
-            *q += (t - *q) / (*c);
+            *q += (e.ts - *q) / (*c);
         }
     }
 }
 
-void MotionCompensation::UpdateModel(cv::Mat &time_img, cv::Mat &event_count) {
-    float tmp1 = 0.0f, tmp2 = 0.0f;
-    float number_I = 0.0f, alpha = 0.1f;
+void MotionCompensation::UpdateModel(cv::Mat &time_img) {
+    float tmp_z = 0.0f, tmp_theta = 0.0f, number_I = 0.0f;
+    // float alpha_x = 4.0f, alpha_y = 0.0f, alpha_z = 0.0f, alpha_theta = 0.0f;
+    // float alpha_x = 0.0f, alpha_y = 10.0f, alpha_z = 0.0f, alpha_theta = 0.0f;
+    // float alpha_x = 0.0f, alpha_y = 0.0f, alpha_z = 0.01f, alpha_theta = 0.0f;
+    // float alpha_x = 0.0f, alpha_y = 0.0f, alpha_z = 0.0f, alpha_theta = 0.01f;
+    float alpha_x = 0.01f, alpha_y = 0.1f, alpha_z = 0.001f, alpha_theta = 0.001f;
     float d_x = 0.0f, d_y = 0.0f, d_z = 0.0f, d_theta = 0.0f;
     cv::Mat G_x, G_y;
     float global_error = 0.0f;
@@ -254,25 +259,24 @@ void MotionCompensation::UpdateModel(cv::Mat &time_img, cv::Mat &event_count) {
     d_x = cv::sum(G_x)[0] / number_I;
     d_y = cv::sum(G_y)[0] / number_I;
 
-    cout << global_error << " and " << number_I << endl;
-
     for (int i = 0; i < IMG_ROWS; i++) {
         for (int j = 0; j < IMG_COLS; j++) {
-            tmp1 += G_x.at<float>(i, j) * i + G_y.at<float>(i, j) * j;
-            tmp2 += G_x.at<float>(i, j) * j - G_y.at<float>(i, j) * i;
+            tmp_z += G_x.at<float>(i, j) * i + G_y.at<float>(i, j) * j;
+            tmp_theta += G_x.at<float>(i, j) * j - G_y.at<float>(i, j) * i;
             global_error += pow(G_x.at<float>(i, j), 2) + pow(G_y.at<float>(i, j), 2);
         }
     }
-    d_z = tmp1 / number_I;
-    d_theta = tmp2 / number_I;
+    d_z = tmp_z / number_I;
+    d_theta = tmp_theta / number_I;
 
-    M_G_.h_x -= d_x * alpha;
-    M_G_.h_y -= d_y * alpha;
-    M_G_.h_z -= d_z * alpha;
-    M_G_.theta -= d_theta * alpha;
+    M_G_.h_x -= d_x * alpha_x;
+    M_G_.h_y -= d_y * alpha_y;
+    M_G_.h_z -= d_z * alpha_z;
+    M_G_.theta -= d_theta * alpha_theta;
 
-    cout << global_error << " and " << number_I << endl;
+    cout << global_error << endl;
 }
+#endif
 
 void MotionCompensation::Visualization(const cv::Mat img, const string window_name) {
     cv::Mat tmp_img, display_img;
@@ -284,8 +288,8 @@ void MotionCompensation::Visualization(const cv::Mat img, const string window_na
     cv::waitKey(0);
 }
 
-inline bool MotionCompensation::IsWithinTheBoundary(const int &x, const int &y) {
-    return (x >= 0 && x < IMG_COLS && y >= 0 && y < IMG_ROWS);
+inline bool MotionCompensation::IsWithinTheBoundary(const int &x, const int &y, cv::Mat &img) {
+    return (x >= 0 && x < img.cols && y >= 0 && y < img.rows);
 }
 
 Eigen::Matrix3f MotionCompensation::Vector2SkewMatrix(Eigen::Vector3f v) {

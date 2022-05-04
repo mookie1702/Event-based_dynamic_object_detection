@@ -16,7 +16,6 @@
 #include <opencv2/highgui/highgui_c.h>
 
 #include <sensor_msgs/Imu.h>
-#include <nav_msgs/Odometry.h>
 #include "dvs_msgs/Event.h"
 #include "dvs_msgs/EventArray.h"
 
@@ -25,40 +24,35 @@ using namespace std;
 #define IMG_ROWS 480
 #define IMG_COLS 640
 
-#define IMU_BASED
-// #define OPTIMIZATION
+// #define IMU_BASED
+#define OPTIMIZATION
 
+#ifdef OPTIMIZATION
 typedef struct warped_event {
     float x;
     float y;
     float ts;
-} WarpEvent;
+} WarpedEvent;
 
-typedef struct warped_event_parameter {
+typedef struct warp_parameter {
     float h_x = 0.0f;
     float h_y = 0.0f;
     float h_z = 0.0f;
     float theta = 0.0f;
 } WarpParameter;
+#endif
 
 class MotionCompensation {
 private:
     /* parameters */
-    Eigen::Matrix3f k_event_camera_K_; // event camera's instrinstic matrix
+    Eigen::Matrix3f k_event_camera_K_;
     Eigen::Matrix3f k_event_camera_K_inverse_;
-
-    // threshold parameters
-    const float threshold_a_ = 0.2f;
-    const float threshold_b_ = -0.1f;
-    float omega_ = 0.0f;
-
-    // Mophology operation parameters
-    const int kernel_size_ = 3;
 
     /* data */
     vector<sensor_msgs::Imu> IMU_buffer_;
     vector<dvs_msgs::Event> event_buffer_;
-    nav_msgs::Odometry odom_buffer_;
+    int event_size_ = 0;
+    int imu_size_ = 0;
 
     cv::Mat source_time_frame_;
     cv::Mat source_event_count_;
@@ -66,18 +60,24 @@ private:
     cv::Mat event_count_;
     cv::Mat compensated_time_img_;
 
+#ifdef IMU_BASED
     Eigen::Matrix3f rotation_matrix_;
     Eigen::Vector3f omega_avg_;
 
-    int event_size_ = 0;
-    int imu_size_ = 0;
+    // Mophology operation and threshold parameters
+    const float threshold_a_ = 0.2f;
+    const float threshold_b_ = -0.1f;
+    float omega_ = 0.0f;
+    const int kernel_size_ = 3;
+#endif
 
-    // optimization method
-    vector<WarpEvent> warped_event_buffer_;
+#ifdef OPTIMIZATION
+    vector<WarpedEvent> warped_event_buffer_;
     int warped_event_size_;
     WarpParameter prev_M_G_, M_G_;
-    const float k_xi_ = 0.005f;
-    const float k_d_ = 1.0f;
+    const float k_d_ = 0.5f;
+    const float k_xi_ = 0.00001f;
+#endif
 
 public:
     typedef std::unique_ptr<MotionCompensation> Ptr;
@@ -102,31 +102,31 @@ public:
     void CleanTimeImgAndEventCount();
     void LoadIMU(const sensor_msgs::ImuConstPtr &imu_msg);
     void LoadEvent(const dvs_msgs::EventArray::ConstPtr &event_msg);
-    void LoadOdometry(const nav_msgs::Odometry::ConstPtr &odom_msg);
     void AccumulateEvents(cv::Mat *time_img, cv::Mat *event_count);
 
-    // IMU-based method
+
+#ifdef IMU_BASED
     void GetAvgAngularVelocity();
     void RotationalCompensation(cv::Mat *time_img, cv::Mat *event_count);
     void MorphologicalOperation(cv::Mat *time_img);
+#endif
 
-    // optimization-based method
-    void CleanParameter();
+#ifdef OPTIMIZATION
+    void CleanWarpParameter();
     void WarpEventCloud(WarpParameter para);
     void GetTimestampImg(cv::Mat *time_img, cv::Mat *event_count);
-    void UpdateModel(cv::Mat &time_img, cv::Mat &event_count);
+    void UpdateModel(cv::Mat &time_img);
+#endif
 
     /* display the effect of motion compensation */
     void Visualization(const cv::Mat img, const string window_name);
 
-    cv::Mat GetSourceTimeFrame() { return source_time_frame_; }
-    cv::Mat GetSourceEventCount() { return source_event_count_; }
     cv::Mat GetTimeImage() { return time_img_; }
     cv::Mat GetEventCount() { return event_count_; }
     cv::Mat GetCompensatedTimeImg() { return compensated_time_img_; }
 
     /* inline functions */
-    inline bool IsWithinTheBoundary(const int &x, const int &y);
+    inline bool IsWithinTheBoundary(const int &x, const int &y, cv::Mat &img);
 
     /* self-defined math functions */
     Eigen::Matrix3f Vector2SkewMatrix(Eigen::Vector3f v);

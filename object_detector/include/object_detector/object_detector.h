@@ -32,7 +32,6 @@ private:
     string k_running_environment_;
     string k_event_topic_;
     string k_imu_topic_;
-    string k_odom_topic_;
 
     /* detecting utilities */
     MotionCompensation::Ptr motion_compensation_;
@@ -43,13 +42,11 @@ private:
     ros::NodeHandle &nh_;
     ros::Subscriber event_sub_;
     ros::Subscriber imu_sub_;
-    ros::Subscriber odom_sub_;
 
     /* ROS functions */
     void ReadParameters(ros::NodeHandle &n);
     void EventCallback(const dvs_msgs::EventArray::ConstPtr &event_msg);
     void ImuCallback(const sensor_msgs::ImuConstPtr &imu_msg);
-    void OdomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg);
 
 public:
     ObjectDetector(ros::NodeHandle &nh) : nh_(nh) {}
