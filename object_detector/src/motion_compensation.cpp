@@ -145,7 +145,7 @@ void MotionCompensation::RotationalCompensation(cv::Mat *time_img, cv::Mat *even
         discretized_x = static_cast<int>(event_vector[0]);
         discretized_y = static_cast<int>(event_vector[1]);
 
-        if (IsWithinTheBoundary(discretized_x, discretized_y)) {
+        if (IsWithinTheBoundary(discretized_x, discretized_y, *time_img)) {
             c = event_count->ptr<int>(discretized_y, discretized_x);
             q = time_img->ptr<float>(discretized_y, discretized_x);
             *c += 1;

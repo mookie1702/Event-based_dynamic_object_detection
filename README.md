@@ -15,6 +15,7 @@
 **Requirement**
 
 * object_detector
+  * imu_tools
 * simulation
   * turtlebot3 related rospackage;
   * DVS driver;

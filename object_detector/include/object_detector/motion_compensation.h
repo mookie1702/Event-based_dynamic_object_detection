@@ -24,8 +24,8 @@ using namespace std;
 #define IMG_ROWS 480
 #define IMG_COLS 640
 
-// #define IMU_BASED
-#define OPTIMIZATION
+#define IMU_BASED
+// #define OPTIMIZATION
 
 #ifdef OPTIMIZATION
 typedef struct warped_event {
