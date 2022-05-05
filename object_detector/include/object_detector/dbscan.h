@@ -8,15 +8,19 @@
 
 using namespace std;
 
+#define IMG_ROWS 480
+#define IMG_COLS 640
+
 enum PointType {
-    Unknown,
-    Core,
-    Border,
-    Noise
+    UNCLASSIFIED,
+    CORE,
+    BODER,
+    NOISE
 };
 
 typedef struct DataPoint_ {
     float x_, y_;
+    float rho_;
     bool is_visited_;
     int point_type_;
     unsigned int cluster_ID_;
@@ -32,6 +36,7 @@ private:
     float k_w_time_score_;
 
     vector<DataPoint> data_set_;
+    cv::Mat distance_matrix_;
 
 public:
     typedef std::unique_ptr<DBSCAN> Ptr;
@@ -39,8 +44,8 @@ public:
     DBSCAN(float eps, unsigned int minpts) : Eps_(eps), MinPts_(minpts) {}
     ~DBSCAN() {}
 
-    void GetData(cv::Mat time_img);
-    float GetDistance(DataPoint &point1, DataPoint &point2);
+    void GetData(cv::Mat &compensated_img);
+    void GetDistanceMatrix();
 };
 
 #endif

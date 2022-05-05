@@ -32,6 +32,8 @@ private:
     cv::Mat compensated_img_;
     cv::Mat flow_data_;
 
+    DBSCAN::Ptr dbscan_;
+
 public:
     typedef std::unique_ptr<ObjectSegmentation> Ptr;
 
@@ -40,6 +42,7 @@ public:
 
     void ObjectSegment();
     void LoadImg(const cv::Mat &event_count, const cv::Mat &time_img);
+
     void CalcLKOpticalFlow();
     void CalcFarnebackOpticalFlow();
 };

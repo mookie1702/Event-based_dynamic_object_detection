@@ -7,7 +7,14 @@ void ObjectSegmentation::LoadImg(const cv::Mat &event_count, const cv::Mat &time
 }
 
 void ObjectSegmentation::ObjectSegment() {
-    CalcFarnebackOpticalFlow();
+    /* Optical Flow */
+    // CalcLKOpticalFlow();
+    // CalcFarnebackOpticalFlow();
+
+    /* Clustering */
+    dbscan_.reset(new DBSCAN(DBSCAN_Eps_, DBSCAN_MinPts_));
+    dbscan_->GetData(compensated_img_);
+    dbscan_->GetDistanceMatrix();
 }
 
 void ObjectSegmentation::CalcLKOpticalFlow() {
@@ -49,13 +56,13 @@ void ObjectSegmentation::CalcLKOpticalFlow() {
         iter++;
     }
     cout << "tracked keypoints: " << keypoints.size() << endl;
-    if (keypoints.size() < 50) {
+    if (keypoints.size() < 500) {
         need_find_keypoint = true;
     }
 
     cv::Mat img_show = img.clone();
     for (auto kp : keypoints)
-        cv::circle(img_show, kp, 10, cv::Scalar(0, 240, 0), 1);
+        cv::circle(img_show, kp, 1, cv::Scalar(255, 255, 255), 1);
     cv::imshow("corners", img_show);
     cv::waitKey(0);
 
