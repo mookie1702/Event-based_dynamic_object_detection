@@ -15,12 +15,14 @@ void ObjectDetector::main() {
 
   event_sub_ = nh_.subscribe(k_event_topic_, 2, &ObjectDetector::EventCallback, this);
   imu_sub_ = nh_.subscribe(k_imu_topic_, 10, &ObjectDetector::ImuCallback, this, ros::TransportHints().tcpNoDelay());
+  depth_sub_ = nh_.subscribe(k_depth_topic_, 1, &ObjectDetector::DepthCallback, this);
 }
 
 void ObjectDetector::ReadParameters(ros::NodeHandle &n) {
   n.getParam("/object_detector_node/running_environment", k_running_environment_);
   n.getParam("/object_detector_node/event_topic", k_event_topic_);
   n.getParam("/object_detector_node/imu_topic", k_imu_topic_);
+  n.getParam("/object_detector_node/depth_topic", k_depth_topic_);
 }
 
 void ObjectDetector::EventCallback(const dvs_msgs::EventArray::ConstPtr &event_msg) {
@@ -37,4 +39,8 @@ void ObjectDetector::EventCallback(const dvs_msgs::EventArray::ConstPtr &event_m
 
 void ObjectDetector::ImuCallback(const sensor_msgs::ImuConstPtr &imu_msg) {
   motion_compensation_->LoadIMU(imu_msg);
+}
+
+void ObjectDetector::DepthCallback(const sensor_msgs::ImageConstPtr &msg) {
+
 }
