@@ -14,7 +14,7 @@ using namespace std;
 enum PointType {
     UNCLASSIFIED,
     CORE,
-    BODER,
+    BORDER,
     NOISE
 };
 
@@ -23,7 +23,7 @@ typedef struct DataPoint_ {
     float rho_;
     bool is_visited_;
     int point_type_;
-    unsigned int cluster_ID_;
+    int cluster_ID_;
 } DataPoint;
 
 class DBSCAN {
@@ -37,6 +37,7 @@ private:
 
     vector<DataPoint> data_set_;
     cv::Mat distance_matrix_;
+    int data_size_;
 
 public:
     typedef std::unique_ptr<DBSCAN> Ptr;
@@ -44,8 +45,11 @@ public:
     DBSCAN(float eps, unsigned int minpts) : Eps_(eps), MinPts_(minpts) {}
     ~DBSCAN() {}
 
-    void GetData(cv::Mat &compensated_img);
+    void GetDataPointsInImg(cv::Mat &compensated_img);
     void GetDistanceMatrix();
+    void FindPointsInEps(cv::Mat dis_mat, vector<int>& point_in_eps);
+    void Cluster();
+    void Display();
 };
 
 #endif

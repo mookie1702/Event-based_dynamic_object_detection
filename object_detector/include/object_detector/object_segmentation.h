@@ -24,8 +24,8 @@ private:
 
     /* parameters */
     // DBSCAN parameters
-    const float DBSCAN_Eps_ = 3.0f;
-    const int DBSCAN_MinPts_ = 45;
+    const float DBSCAN_Eps_ = 100.0f;
+    const int DBSCAN_MinPts_ = 40;
 
     /* data */
     cv::Mat event_count_;

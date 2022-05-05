@@ -13,8 +13,10 @@ void ObjectSegmentation::ObjectSegment() {
 
     /* Clustering */
     dbscan_.reset(new DBSCAN(DBSCAN_Eps_, DBSCAN_MinPts_));
-    dbscan_->GetData(compensated_img_);
+    dbscan_->GetDataPointsInImg(compensated_img_);
     dbscan_->GetDistanceMatrix();
+    dbscan_->Cluster();
+    dbscan_->Display();
 }
 
 void ObjectSegmentation::CalcLKOpticalFlow() {
