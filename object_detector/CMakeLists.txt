@@ -155,7 +155,8 @@ add_executable(${PROJECT_NAME}_node
   src/motion_compensation.cpp
   src/object_segmentation.cpp
   src/dbscan.cpp
-  src/motion_estimation.cpp
+  src/depth_estimation.cpp
+  src/velocity_estimation.cpp
 )
 
 ## Rename C++ executable without prefix

@@ -19,7 +19,7 @@
 
 #include "motion_compensation.h"
 #include "object_segmentation.h"
-#include "motion_estimation.h"
+#include "depth_estimation.h"
 
 using namespace std;
 
@@ -37,7 +37,7 @@ private:
     /* detecting utilities */
     MotionCompensation::Ptr motion_compensation_;
     ObjectSegmentation::Ptr object_segmentation_;
-    MotionEstimation::Ptr motion_estimation_;
+    DepthEstimation::Ptr depth_estimation_;
 
     /* ROS utilities */
     ros::NodeHandle &nh_;

@@ -11,7 +11,7 @@ void ObjectDetector::main() {
 
   motion_compensation_.reset(new MotionCompensation(is_simulation_));
   object_segmentation_.reset(new ObjectSegmentation());
-  motion_estimation_.reset(new MotionEstimation());
+  depth_estimation_.reset(new DepthEstimation());
 
   event_sub_ = nh_.subscribe(k_event_topic_, 2, &ObjectDetector::EventCallback, this);
   imu_sub_ = nh_.subscribe(k_imu_topic_, 10, &ObjectDetector::ImuCallback, this, ros::TransportHints().tcpNoDelay());
