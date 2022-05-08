@@ -49,7 +49,7 @@ private:
     void ReadParameters(ros::NodeHandle &n);
     void EventCallback(const dvs_msgs::EventArray::ConstPtr &event_msg);
     void ImuCallback(const sensor_msgs::ImuConstPtr &imu_msg);
-    void DepthCallback(const sensor_msgs::ImageConstPtr &msg);
+    void DepthCallback(const sensor_msgs::ImageConstPtr &depth_msg);
 
 public:
     ObjectDetector(ros::NodeHandle &nh) : nh_(nh) {}

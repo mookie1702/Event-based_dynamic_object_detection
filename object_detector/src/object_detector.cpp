@@ -26,21 +26,21 @@ void ObjectDetector::ReadParameters(ros::NodeHandle &n) {
 }
 
 void ObjectDetector::EventCallback(const dvs_msgs::EventArray::ConstPtr &event_msg) {
-  motion_compensation_->LoadEvent(event_msg);
+  // motion_compensation_->LoadEvent(event_msg);
 
-  // Motion Compensation
-  motion_compensation_->MotionCompensate();
+  // // Motion Compensation
+  // motion_compensation_->MotionCompensate();
 
-  /* detect objects base on compensated img */
-  object_segmentation_->LoadImg(motion_compensation_->GetEventCount(),
-                                motion_compensation_->GetCompensatedTimeImg());
-  object_segmentation_->ObjectSegment();
+  // /* detect objects base on compensated img */
+  // object_segmentation_->LoadImg(motion_compensation_->GetEventCount(),
+  //                               motion_compensation_->GetCompensatedTimeImg());
+  // object_segmentation_->ObjectSegment();
 }
 
 void ObjectDetector::ImuCallback(const sensor_msgs::ImuConstPtr &imu_msg) {
   motion_compensation_->LoadIMU(imu_msg);
 }
 
-void ObjectDetector::DepthCallback(const sensor_msgs::ImageConstPtr &msg) {
-
+void ObjectDetector::DepthCallback(const sensor_msgs::ImageConstPtr &depth_msg) {
+  depth_estimation_->EstimateDepth(depth_msg);
 }

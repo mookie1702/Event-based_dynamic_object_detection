@@ -10,6 +10,7 @@ class VelocityEstimation {
 private:
 public:
     typedef std::unique_ptr<VelocityEstimation> Ptr;
+    
     VelocityEstimation() {}
     ~VelocityEstimation() {}
 };
