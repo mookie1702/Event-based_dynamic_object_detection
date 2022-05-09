@@ -28,28 +28,37 @@ typedef struct DataPoint_ {
 
 class DBSCAN {
 private:
+    const int k_rho_threshold_ = 180;
+
     // DBSCAN parameters
     float Eps_;
     unsigned int MinPts_;
-    float k_w_distance_;
-    float k_w_optical_flow_;
-    float k_w_time_score_;
+    // const float k_w_distance_;
+    // const float k_w_optical_flow_;
+    // const float k_w_time_score_;
 
     vector<DataPoint> data_set_;
     cv::Mat distance_matrix_;
     int data_size_;
+    int cluster_number_;
 
 public:
     typedef std::unique_ptr<DBSCAN> Ptr;
 
-    DBSCAN(float eps, unsigned int minpts) : Eps_(eps), MinPts_(minpts) {}
+    DBSCAN(float eps, unsigned int minpts) {
+        Eps_ = eps;
+        MinPts_ = minpts;
+    }
     ~DBSCAN() {}
 
-    void GetDataPointsInImg(cv::Mat &compensated_img);
+    void GetDataPointsInImg(cv::Mat& compensated_img);
     void GetDistanceMatrix();
-    void FindPointsInEps(cv::Mat dis_mat, vector<int>& point_in_eps);
+    void FindPointsInEps(cv::Mat& dis_mat, vector<int>& point_in_eps);
     void Cluster();
-    void Display();
+    void DisplayCluster();
+
+    vector<DataPoint> GetDataset() { return data_set_; }
+    int GetClusterNumber() { return cluster_number_; }
 };
 
 #endif

@@ -7,16 +7,45 @@ void ObjectSegmentation::LoadImg(const cv::Mat &event_count, const cv::Mat &time
 }
 
 void ObjectSegmentation::ObjectSegment() {
-    /* Optical Flow */
-    // CalcLKOpticalFlow();
-    // CalcFarnebackOpticalFlow();
+    ClearData();
 
     /* Clustering */
-    dbscan_.reset(new DBSCAN(DBSCAN_Eps_, DBSCAN_MinPts_));
+    dbscan_.reset(new DBSCAN(k_DBSCAN_Eps_, k_DBSCAN_MinPts_));
     dbscan_->GetDataPointsInImg(compensated_img_);
     dbscan_->GetDistanceMatrix();
     dbscan_->Cluster();
-    dbscan_->Display();
+    dbscan_->DisplayCluster();
+    // data_set_ = dbscan_->GetDataset();
+
+    // cluster_number_ = dbscan_->GetClusterNumber();
+    // GetObjectNumber();
+    // cout << "The number of objects is: " << object_size_ << endl;
+
+    /* Optical Flow */
+    // CalcLKOpticalFlow(data_set_);
+}
+
+void ObjectSegmentation::ClearData() {
+    cluster_number_ = 0;
+    object_size_ = 0;
+    object_number_.clear();
+}
+
+void ObjectSegmentation::GetObjectNumber() {
+    if (1 < cluster_number_) {
+        for (int i = 1; i < cluster_number_; i++) {
+            int point_counter = 0;
+            for (auto point : data_set_) {
+                if (i == point.cluster_ID_) {
+                    point_counter++;
+                }
+            }
+            if (k_object_threshold_ < point_counter) {
+                object_size_ += 1;
+                object_number_.push_back(i);
+            }
+        }
+    }
 }
 
 void ObjectSegmentation::CalcLKOpticalFlow() {
@@ -66,6 +95,59 @@ void ObjectSegmentation::CalcLKOpticalFlow() {
     for (auto kp : keypoints)
         cv::circle(img_show, kp, 1, cv::Scalar(255, 255, 255), 1);
     cv::imshow("corners", img_show);
+    cv::waitKey(0);
+
+    last_img = img;
+}
+
+void ObjectSegmentation::CalcLKOpticalFlow(vector<DataPoint>& dataset) {
+    static bool first_running = true;
+    static list<cv::Point2f> keypoints;
+    static cv::Mat last_img, img;
+
+    img = compensated_img_.clone();
+
+    if (first_running) {
+        for (auto point : data_set_) {
+            if (CORE == point.point_type_) {
+                cv::Point2f tmp;
+                tmp.x = point.x_;
+                tmp.y = point.y_;
+                keypoints.push_back(tmp);
+            }
+        }
+        last_img = img;
+        first_running = false;
+        return;
+    }
+
+    vector<cv::Point2f> next_keypoints;
+    vector<cv::Point2f> prev_keypoints;
+    for (auto kp : keypoints)
+        prev_keypoints.push_back(kp);
+    vector<unsigned char> status;
+    vector<float> error;
+    cv::calcOpticalFlowPyrLK(last_img, img, prev_keypoints, next_keypoints, status, error);
+
+    // // delete the missing keypoints.
+    // int i = 0;
+    // for (auto iter = keypoints.begin(); iter != keypoints.end(); i++) {
+    //     if (status[i] == 0) {
+    //         iter = keypoints.erase(iter);
+    //         continue;
+    //     }
+    //     *iter = next_keypoints[i];
+    //     iter++;
+    // }
+    // cout << "tracked keypoints: " << keypoints.size() << endl;
+    // if (keypoints.size() < 500) {
+    //     first_running = true;
+    // }
+
+    cv::Mat img_show = img.clone();
+    for (auto kp : keypoints)
+        cv::circle(img_show, kp, 1, cv::Scalar(255, 255, 255), 1);
+    cv::imshow("optical_flow", img_show);
     cv::waitKey(0);
 
     last_img = img;

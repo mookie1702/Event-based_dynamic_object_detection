@@ -19,18 +19,22 @@ using namespace std;
 
 class ObjectSegmentation {
 private:
-    /* flags */
-    bool is_object_;
-
     /* parameters */
     // DBSCAN parameters
-    const float DBSCAN_Eps_ = 100.0f;
-    const int DBSCAN_MinPts_ = 40;
+    const float k_DBSCAN_Eps_ = 100.0f;
+    const unsigned int k_DBSCAN_MinPts_ = 10;
+
+    const int k_object_threshold_ = 50;
 
     /* data */
     cv::Mat event_count_;
     cv::Mat compensated_img_;
     cv::Mat flow_data_;
+    vector<DataPoint> data_set_;
+
+    int cluster_number_;
+    int object_size_;
+    vector<int> object_number_;
 
     DBSCAN::Ptr dbscan_;
 
@@ -40,10 +44,14 @@ public:
     ObjectSegmentation() {}
     ~ObjectSegmentation() {}
 
-    void ObjectSegment();
     void LoadImg(const cv::Mat &event_count, const cv::Mat &time_img);
 
+    void ObjectSegment();
+    void ClearData();
+    void GetObjectNumber();
+
     void CalcLKOpticalFlow();
+    void CalcLKOpticalFlow(vector<DataPoint>& dataset);
     void CalcFarnebackOpticalFlow();
 };
 
