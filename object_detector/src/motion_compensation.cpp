@@ -3,14 +3,13 @@
 void MotionCompensation::MotionCompensate() {
     CleanTimeImgAndEventCount();
     AccumulateEvents(&source_time_frame_, &source_event_count_);
-    Visualization(source_time_frame_, "source_time_frame_");
+    // Visualization(source_time_frame_, "source_time_frame_");
 
 #ifdef IMU_BASED
     GetAvgAngularVelocity();
     RotationalCompensation(&time_img_, &event_count_);
     MorphologicalOperation(&compensated_time_img_);
-
-    Visualization(compensated_time_img_, "compensated_time_img_");
+    // Visualization(compensated_time_img_, "compensated_time_img_");
 #endif
 
 #ifdef OPTIMIZATION

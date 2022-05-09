@@ -107,7 +107,7 @@ void DBSCAN::Cluster() {
             data_set_[k].cluster_ID_ = -1;
         }
     }
-    cout << "The number of clusters is: " << cluster_number_ << endl;
+    // cout << "The number of clusters is: " << cluster_number_ - 1 << endl;
 }
 
 void DBSCAN::DisplayCluster() {

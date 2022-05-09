@@ -14,15 +14,20 @@ void ObjectSegmentation::ObjectSegment() {
     dbscan_->GetDataPointsInImg(compensated_img_);
     dbscan_->GetDistanceMatrix();
     dbscan_->Cluster();
-    dbscan_->DisplayCluster();
-    // data_set_ = dbscan_->GetDataset();
+    // dbscan_->DisplayCluster();
 
-    // cluster_number_ = dbscan_->GetClusterNumber();
-    // GetObjectNumber();
-    // cout << "The number of objects is: " << object_size_ << endl;
+    data_set_ = dbscan_->GetDataset();
+    cluster_number_ = dbscan_->GetClusterNumber();
+    if (1 < cluster_number_) {
+        GetObjectNumber();
+        cout << "The number of objects is: " << object_size_ << endl;
+    }
 
     /* Optical Flow */
-    // CalcLKOpticalFlow(data_set_);
+    if (0 < object_size_) {
+        CalcFarnebackOpticalFlow();
+        // IsSuperposition();
+    }
 }
 
 void ObjectSegmentation::ClearData() {
@@ -32,18 +37,16 @@ void ObjectSegmentation::ClearData() {
 }
 
 void ObjectSegmentation::GetObjectNumber() {
-    if (1 < cluster_number_) {
-        for (int i = 1; i < cluster_number_; i++) {
-            int point_counter = 0;
-            for (auto point : data_set_) {
-                if (i == point.cluster_ID_) {
-                    point_counter++;
-                }
+    for (int i = 1; i < cluster_number_; i++) {
+        int point_counter = 0;
+        for (auto point : data_set_) {
+            if (i == point.cluster_ID_) {
+                point_counter++;
             }
-            if (k_object_threshold_ < point_counter) {
-                object_size_ += 1;
-                object_number_.push_back(i);
-            }
+        }
+        if (k_object_threshold_ < point_counter) {
+            object_size_ += 1;
+            object_number_.push_back(i);
         }
     }
 }
@@ -108,17 +111,18 @@ void ObjectSegmentation::CalcLKOpticalFlow(vector<DataPoint>& dataset) {
     img = compensated_img_.clone();
 
     if (first_running) {
-        for (auto point : data_set_) {
-            if (CORE == point.point_type_) {
-                cv::Point2f tmp;
-                tmp.x = point.x_;
-                tmp.y = point.y_;
-                keypoints.push_back(tmp);
-            }
-        }
         last_img = img;
         first_running = false;
         return;
+    }
+
+    for (auto point : data_set_) {
+        if (CORE == point.point_type_) {
+            cv::Point2f tmp;
+            tmp.x = point.x_;
+            tmp.y = point.y_;
+            keypoints.push_back(tmp);
+        }
     }
 
     vector<cv::Point2f> next_keypoints;
@@ -129,20 +133,17 @@ void ObjectSegmentation::CalcLKOpticalFlow(vector<DataPoint>& dataset) {
     vector<float> error;
     cv::calcOpticalFlowPyrLK(last_img, img, prev_keypoints, next_keypoints, status, error);
 
-    // // delete the missing keypoints.
-    // int i = 0;
-    // for (auto iter = keypoints.begin(); iter != keypoints.end(); i++) {
-    //     if (status[i] == 0) {
-    //         iter = keypoints.erase(iter);
-    //         continue;
-    //     }
-    //     *iter = next_keypoints[i];
-    //     iter++;
-    // }
-    // cout << "tracked keypoints: " << keypoints.size() << endl;
-    // if (keypoints.size() < 500) {
-    //     first_running = true;
-    // }
+    // delete the missing keypoints.
+    int i = 0;
+    for (auto iter = keypoints.begin(); iter != keypoints.end(); i++) {
+        if (status[i] == 0) {
+            iter = keypoints.erase(iter);
+            continue;
+        }
+        *iter = next_keypoints[i];
+        iter++;
+    }
+    cout << "tracked keypoints: " << keypoints.size() << endl;
 
     cv::Mat img_show = img.clone();
     for (auto kp : keypoints)
@@ -180,4 +181,21 @@ void ObjectSegmentation::CalcFarnebackOpticalFlow() {
     // }
     // cv::imshow("Farneback_Optical_Flow", img_show);
     // cv::waitKey(0);
+}
+
+void ObjectSegmentation::IsSuperposition() {
+    bool is_base = true;
+    cv::Point2f base, tmp;
+
+    for (int i = 0; i < object_size_; i++) {
+        for (auto point : data_set_) {
+            if (object_number_[i] == point.cluster_ID_ && true == is_base) {
+                base = flow_data_.at<cv::Point2f>(point.x_, point.y_);
+                is_base = false;
+            } else if (object_number_[i] == point.cluster_ID_ && false == is_base) {
+                tmp = flow_data_.at<cv::Point2f>(point.x_, point.y_);
+            }
+        }
+        is_base = true;
+    }
 }

@@ -21,10 +21,10 @@ class ObjectSegmentation {
 private:
     /* parameters */
     // DBSCAN parameters
-    const float k_DBSCAN_Eps_ = 100.0f;
+    const float k_DBSCAN_Eps_ = 10.0f;
     const unsigned int k_DBSCAN_MinPts_ = 10;
 
-    const int k_object_threshold_ = 50;
+    const int k_object_threshold_ = 70;
 
     /* data */
     cv::Mat event_count_;
@@ -53,6 +53,7 @@ public:
     void CalcLKOpticalFlow();
     void CalcLKOpticalFlow(vector<DataPoint>& dataset);
     void CalcFarnebackOpticalFlow();
+    void IsSuperposition();
 };
 
 #endif
