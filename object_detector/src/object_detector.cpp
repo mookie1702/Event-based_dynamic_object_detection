@@ -42,5 +42,5 @@ void ObjectDetector::ImuCallback(const sensor_msgs::ImuConstPtr &imu_msg) {
 }
 
 void ObjectDetector::DepthCallback(const sensor_msgs::ImageConstPtr &depth_msg) {
-  // depth_estimation_->EstimateDepth(depth_msg);
+  depth_estimation_->EstimateDepth(depth_msg);
 }

@@ -13,7 +13,4 @@ void DepthEstimation::EstimateDepth(const sensor_msgs::ImageConstPtr& depth_msg)
     /* Morphology operations */
     cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5), cv::Point(-1, -1));
     morphologyEx(depth_gray_, depth_gray_, CV_MOP_CLOSE, kernel, cv::Point(-1, -1), 1);
-    cv::Mat depth_gray_u8(depth_msg->height, depth_msg->width, CV_8UC1);
-    depth_gray_.convertTo(depth_gray_u8, CV_8UC1, 1.0 / 256);
-
 }

@@ -19,6 +19,9 @@ using namespace std;
 
 class ObjectSegmentation {
 private:
+    /* flags */
+    bool is_object_;
+
     /* parameters */
     // DBSCAN parameters
     const float k_DBSCAN_Eps_ = 10.0f;

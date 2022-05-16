@@ -50,6 +50,8 @@ public:
     ~DepthEstimation() {}
 
     void EstimateDepth(const sensor_msgs::ImageConstPtr& depth_msg);
+
+    cv::Mat GetDepthImg() { return depth_gray_; }
 };
 
 #endif

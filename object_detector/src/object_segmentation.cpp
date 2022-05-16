@@ -25,12 +25,14 @@ void ObjectSegmentation::ObjectSegment() {
 
     /* Optical Flow */
     if (0 < object_size_) {
+        is_object_ = true;
         CalcFarnebackOpticalFlow();
         // IsSuperposition();
     }
 }
 
 void ObjectSegmentation::ClearData() {
+    is_object_ = false;
     cluster_number_ = 0;
     object_size_ = 0;
     object_number_.clear();
@@ -190,10 +192,13 @@ void ObjectSegmentation::IsSuperposition() {
     for (int i = 0; i < object_size_; i++) {
         for (auto point : data_set_) {
             if (object_number_[i] == point.cluster_ID_ && true == is_base) {
-                base = flow_data_.at<cv::Point2f>(point.x_, point.y_);
+                base = flow_data_.at<cv::Point2f>(point.y_, point.x_);
                 is_base = false;
             } else if (object_number_[i] == point.cluster_ID_ && false == is_base) {
-                tmp = flow_data_.at<cv::Point2f>(point.x_, point.y_);
+                tmp = flow_data_.at<cv::Point2f>(point.y_, point.x_);
+            }
+            if (0 > base.dot(tmp)) {
+                object_size_ += 1;
             }
         }
         is_base = true;
