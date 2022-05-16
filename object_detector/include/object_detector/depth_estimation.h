@@ -43,6 +43,7 @@ private:
     /* data */
     cv::Mat depth_gray_;
     geometry_msgs::PointStamped depth_point_;
+
 public:
     typedef std::unique_ptr<DepthEstimation> Ptr;
 

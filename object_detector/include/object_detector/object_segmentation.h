@@ -57,6 +57,8 @@ public:
     void CalcLKOpticalFlow(vector<DataPoint>& dataset);
     void CalcFarnebackOpticalFlow();
     void IsSuperposition();
+
+    void DisplayObject();
 };
 
 #endif

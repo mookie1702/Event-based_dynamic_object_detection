@@ -28,6 +28,7 @@ void ObjectSegmentation::ObjectSegment() {
         is_object_ = true;
         CalcFarnebackOpticalFlow();
         // IsSuperposition();
+        // DisplayObject();
     }
 }
 
@@ -49,6 +50,16 @@ void ObjectSegmentation::GetObjectNumber() {
         if (k_object_threshold_ < point_counter) {
             object_size_ += 1;
             object_number_.push_back(i);
+        } else if (k_object_threshold_ >= point_counter) {
+            int k = 0;
+            for (auto iter = data_set_.begin(); iter != data_set_.end(); k++) {
+                if (i == data_set_[k].cluster_ID_) {
+                    iter = data_set_.erase(iter);
+                    k -= 1;
+                    continue;
+                }
+                iter++;
+            }
         }
     }
 }
@@ -203,4 +214,10 @@ void ObjectSegmentation::IsSuperposition() {
         }
         is_base = true;
     }
+}
+
+void ObjectSegmentation::DisplayObject() {
+    cv::Mat tmp_img, display_img;
+    cv::imshow("object", display_img);
+    cv::waitKey(0);
 }
