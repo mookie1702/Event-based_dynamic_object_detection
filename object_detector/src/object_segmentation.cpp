@@ -27,7 +27,6 @@ void ObjectSegmentation::ObjectSegment() {
     if (0 < object_size_) {
         is_object_ = true;
         CalcFarnebackOpticalFlow();
-        // IsSuperposition();
         // DisplayObject();
     }
 }
@@ -194,13 +193,12 @@ void ObjectSegmentation::CalcFarnebackOpticalFlow() {
     // }
     // cv::imshow("Farneback_Optical_Flow", img_show);
     // cv::waitKey(0);
-}
 
-void ObjectSegmentation::IsSuperposition() {
     bool is_base = true;
     cv::Point2f base, tmp;
+    int tmp_object_size = object_size_;
 
-    for (int i = 0; i < object_size_; i++) {
+    for (int i = 0; i < tmp_object_size; i++) {
         for (auto point : data_set_) {
             if (object_number_[i] == point.cluster_ID_ && true == is_base) {
                 base = flow_data_.at<cv::Point2f>(point.y_, point.x_);
@@ -208,8 +206,10 @@ void ObjectSegmentation::IsSuperposition() {
             } else if (object_number_[i] == point.cluster_ID_ && false == is_base) {
                 tmp = flow_data_.at<cv::Point2f>(point.y_, point.x_);
             }
-            if (0 > base.dot(tmp)) {
+            if (-5 > base.dot(tmp)) {
                 object_size_ += 1;
+                is_base = true;
+                break;
             }
         }
         is_base = true;
@@ -217,7 +217,16 @@ void ObjectSegmentation::IsSuperposition() {
 }
 
 void ObjectSegmentation::DisplayObject() {
-    cv::Mat tmp_img, display_img;
+    cv::Mat display_img = compensated_img_.clone();
+    cv::cvtColor(display_img, display_img, cv::COLOR_GRAY2RGB);
+
+    for (auto point : data_set_) {
+        cv::Point2f tmp_point;
+        tmp_point.x = point.y_;
+        tmp_point.y = point.x_;
+        cv::circle(display_img, tmp_point, 1, cv::Scalar(0, 255, 0), 1);
+    }
+
     cv::imshow("object", display_img);
     cv::waitKey(0);
 }
