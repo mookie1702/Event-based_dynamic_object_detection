@@ -50,6 +50,7 @@ public:
     void LoadImg(const cv::Mat &event_count, const cv::Mat &time_img);
 
     void ObjectSegment();
+
     void ClearData();
     void GetObjectNumber();
 
@@ -58,6 +59,10 @@ public:
     void CalcFarnebackOpticalFlow();
 
     void DisplayObject();
+
+    bool GetIsObject() { return is_object_; }
+    int GetObjectSize() { return object_size_; }
+    vector<DataPoint> GetDataset() { return data_set_; }
 };
 
 #endif

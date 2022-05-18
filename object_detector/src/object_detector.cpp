@@ -37,6 +37,12 @@ void ObjectDetector::EventCallback(const dvs_msgs::EventArray::ConstPtr &event_m
                                 motion_compensation_->GetCompensatedTimeImg());
   object_segmentation_->ObjectSegment();
 
+  if (object_segmentation_->GetIsObject()) {
+    velocity_estimation_->LoadDepthImg(depth_estimation_->GetDepthImg());
+    velocity_estimation_->LoadObjectData(object_segmentation_->GetObjectSize(),
+                                         object_segmentation_->GetDataset());
+    velocity_estimation_->EstimateVelocity();
+  }
 }
 
 void ObjectDetector::ImuCallback(const sensor_msgs::ImuConstPtr &imu_msg) {
