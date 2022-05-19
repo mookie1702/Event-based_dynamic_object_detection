@@ -61,7 +61,9 @@ public:
     void SetIsObject(bool is_object) { is_object_ = is_object; }
     void SetEventDetectionRect(cv::Rect &roi_rect) { roi_rect_ = roi_rect; }
 
+    bool GetIsObject() { return is_object_; }
     cv::Mat GetDepthImg() { return depth_gray_; }
+    geometry_msgs::PointStamped GetDepthPoint(void) { return depth_point_; }
 };
 
 #endif

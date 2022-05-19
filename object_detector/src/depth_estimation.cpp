@@ -17,14 +17,14 @@ void DepthEstimation::EstimateDepth(const sensor_msgs::ImageConstPtr& depth_msg)
     depth_gray_.convertTo(depth_gray_u8, CV_8UC1, 1.0 / 256);
 
     if (is_object_) {
-        cv::Rect r(roi_rect_);
-        CropDepthImage(depth_gray_, &r);
+        cv::Rect tmp_rect(roi_rect_);
+        CropDepthImage(depth_gray_, &tmp_rect);
 
-        cv::Mat obj_img_u8 = depth_gray_u8(r);
-        cv::Mat obj_img = depth_gray_(r);
+        cv::Mat obj_img_u8 = depth_gray_u8(tmp_rect);
+        cv::Mat obj_img = depth_gray_(tmp_rect);
 
-        float u = r.x;
-        float v = r.y;
+        float u = tmp_rect.x;
+        float v = tmp_rect.y;
 
         int loc = SegmentDepth(obj_img_u8);
 
@@ -58,11 +58,11 @@ void DepthEstimation::EstimateDepth(const sensor_msgs::ImageConstPtr& depth_msg)
             }
         }
         /* visualization */
-        cv::Mat vis_depth_(depth_msg->height, depth_msg->width, CV_8UC3);
-        cv::applyColorMap(depth_gray_u8, vis_depth_, cv::COLORMAP_JET);
-        cv::rectangle(vis_depth_, r, cv::Scalar(0, 255, 0), 2, cv::LINE_8, 0);
-        cv::imshow("depth_img", vis_depth_);
-        cv::waitKey(0);
+        // cv::Mat vis_depth_(depth_msg->height, depth_msg->width, CV_8UC3);
+        // cv::applyColorMap(depth_gray_u8, vis_depth_, cv::COLORMAP_JET);
+        // cv::rectangle(vis_depth_, tmp_rect, cv::Scalar(0, 255, 0), 2, cv::LINE_8, 0);
+        // cv::imshow("depth_img", vis_depth_);
+        // cv::waitKey(0);
     }
 }
 

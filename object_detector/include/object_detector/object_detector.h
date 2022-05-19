@@ -47,6 +47,9 @@ private:
     ros::Subscriber imu_sub_;
     ros::Subscriber depth_sub_;
 
+    ros::Publisher object_event_pub;
+    ros::Publisher object_depth_pub;
+
     /* ROS functions */
     void ReadParameters(ros::NodeHandle &n);
     void EventCallback(const dvs_msgs::EventArray::ConstPtr &event_msg);

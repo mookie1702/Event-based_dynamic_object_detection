@@ -17,6 +17,9 @@ void ObjectDetector::main() {
   event_sub_ = nh_.subscribe(k_event_topic_, 2, &ObjectDetector::EventCallback, this);
   imu_sub_ = nh_.subscribe(k_imu_topic_, 10, &ObjectDetector::ImuCallback, this, ros::TransportHints().tcpNoDelay());
   depth_sub_ = nh_.subscribe(k_depth_topic_, 1, &ObjectDetector::DepthCallback, this, ros::TransportHints().tcpNoDelay());
+
+  object_event_pub = nh_.advertise<geometry_msgs::PointStamped>("/object_event_point", 1);
+  object_depth_pub = nh_.advertise<geometry_msgs::PointStamped>("/object_depth_point", 1);
 }
 
 void ObjectDetector::ReadParameters(ros::NodeHandle &n) {
@@ -58,12 +61,7 @@ void ObjectDetector::EventCallback(const dvs_msgs::EventArray::ConstPtr &event_m
     object_point_in_event.point.x = roi_rect.x + roi_rect.width * 0.5f;
     object_point_in_event.point.y = roi_rect.y + roi_rect.height * 0.5f;
     object_point_in_event.point.z = 0;
-
-    // velocity_estimation_->LoadDepthImg(depth_estimation_->GetDepthImg());
-    // velocity_estimation_->LoadObjectData(object_segmentation_->GetObjectSize(),
-    //                                      object_segmentation_->GetDataset(),
-    //                                      object_point_in_event);
-    // velocity_estimation_->EstimateVelocity();
+    object_event_pub.publish(object_point_in_event);
   }
 }
 
@@ -73,4 +71,8 @@ void ObjectDetector::ImuCallback(const sensor_msgs::ImuConstPtr &imu_msg) {
 
 void ObjectDetector::DepthCallback(const sensor_msgs::ImageConstPtr &depth_msg) {
   depth_estimation_->EstimateDepth(depth_msg);
+  if (depth_estimation_->GetIsObject()) {
+    geometry_msgs::PointStamped object_point_in_depth = depth_estimation_->GetDepthPoint();
+    object_depth_pub.publish(object_point_in_depth);
+  }
 }
