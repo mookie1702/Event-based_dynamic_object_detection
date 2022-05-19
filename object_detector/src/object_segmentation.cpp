@@ -28,7 +28,7 @@ void ObjectSegmentation::ObjectSegment() {
         is_object_ = true;
         CalcFarnebackOpticalFlow();
         GetDetectROI();
-        DisplayObject();
+        // DisplayObject();
     }
 }
 

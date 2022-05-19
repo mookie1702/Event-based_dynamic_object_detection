@@ -156,6 +156,10 @@ add_executable(${PROJECT_NAME}_node
   src/object_segmentation.cpp
   src/dbscan.cpp
   src/depth_estimation.cpp
+)
+
+add_executable(velocity_estimation_node
+  src/velocity_estimation_node.cpp
   src/velocity_estimation.cpp
 )
 
@@ -169,8 +173,16 @@ add_executable(${PROJECT_NAME}_node
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_dependencies(velocity_estimation_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
+  ${catkin_INCLUDE_DIRS}
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+)
+
+target_link_libraries(velocity_estimation_node
   ${catkin_INCLUDE_DIRS}
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
