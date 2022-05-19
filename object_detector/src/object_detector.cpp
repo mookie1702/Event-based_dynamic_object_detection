@@ -41,25 +41,30 @@ void ObjectDetector::EventCallback(const dvs_msgs::EventArray::ConstPtr &event_m
                                 motion_compensation_->GetCompensatedTimeImg());
   object_segmentation_->ObjectSegment();
 
-  if (!object_segmentation_->GetIsObject())
-    return;
+  if (!object_segmentation_->GetIsObject()) {
+    depth_estimation_->SetIsObject(object_segmentation_->GetIsObject());
+  } else {
+    cv::Rect roi_rect = object_segmentation_->GetROIRect();
+    cv::Mat roi_mat = time_img(roi_rect);
+    roi_mat.convertTo(roi_mat, CV_8U);
+    auto ts = cv::mean(roi_mat, roi_mat);
 
-  cv::Rect roi_rect = object_segmentation_->GetROIRect();
-  cv::Mat roi_mat = time_img(roi_rect);
-  roi_mat.convertTo(roi_mat, CV_8U);
-  auto ts = cv::mean(roi_mat, roi_mat);
+    depth_estimation_->SetIsObject(object_segmentation_->GetIsObject());
+    depth_estimation_->SetEventDetectionRect(roi_rect);
 
-  geometry_msgs::PointStamped object_point_in_event;
-  object_point_in_event.header.stamp = event_msg->events[0].ts + ros::Duration(ts[0]);
-  object_point_in_event.header.frame_id = "/cam";
-  object_point_in_event.point.x = roi_rect.x + roi_rect.width * 0.5f;
-  object_point_in_event.point.y = roi_rect.y + roi_rect.height * 0.5f;
-  object_point_in_event.point.z = 0;
+    geometry_msgs::PointStamped object_point_in_event;
+    object_point_in_event.header.stamp = event_msg->events[0].ts + ros::Duration(ts[0]);
+    object_point_in_event.header.frame_id = "/cam";
+    object_point_in_event.point.x = roi_rect.x + roi_rect.width * 0.5f;
+    object_point_in_event.point.y = roi_rect.y + roi_rect.height * 0.5f;
+    object_point_in_event.point.z = 0;
 
-  velocity_estimation_->LoadDepthImg(depth_estimation_->GetDepthImg());
-  velocity_estimation_->LoadObjectData(object_segmentation_->GetObjectSize(),
-                                       object_segmentation_->GetDataset());
-  // velocity_estimation_->EstimateVelocity();
+    // velocity_estimation_->LoadDepthImg(depth_estimation_->GetDepthImg());
+    // velocity_estimation_->LoadObjectData(object_segmentation_->GetObjectSize(),
+    //                                      object_segmentation_->GetDataset(),
+    //                                      object_point_in_event);
+    // velocity_estimation_->EstimateVelocity();
+  }
 }
 
 void ObjectDetector::ImuCallback(const sensor_msgs::ImuConstPtr &imu_msg) {

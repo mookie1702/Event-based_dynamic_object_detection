@@ -4,7 +4,9 @@ void VelocityEstimation::LoadDepthImg(const cv::Mat& depth_img) {
     depth_img_ = depth_img.clone();
 }
 
-void VelocityEstimation::LoadObjectData(const int object_size, const vector<DataPoint> data_set) {
+void VelocityEstimation::LoadObjectData(const int object_size,
+                                        const vector<DataPoint> data_set,
+                                        const geometry_msgs::PointStamped object_point_in_event) {
     object_size_ = object_size;
     data_set_ = data_set;
 }
@@ -15,8 +17,4 @@ void VelocityEstimation::EstimateVelocity() {
     // cv::circle(display_img, center_point_[0], 10, cv::Scalar(0, 0, 0), 1);
     // cv::imshow("depth_object", display_img);
     // cv::waitKey(0);
-}
-
-void VelocityEstimation::GetObjectDepth() {
-
 }

@@ -6,21 +6,20 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/PoseStamped.h>
+
 #include "dbscan.h"
 
 using namespace std;
 
 class VelocityEstimation {
 private:
-    /* flags */
-
     /* data */
     int object_size_;
     vector<DataPoint> data_set_;
+    geometry_msgs::PointStamped object_point_in_event_;
     cv::Mat depth_img_;
-
-    vector<cv::Point2f> center_point_;
-    ushort object_depth_;
 
 public:
     typedef std::unique_ptr<VelocityEstimation> Ptr;
@@ -28,12 +27,12 @@ public:
     VelocityEstimation() {}
     ~VelocityEstimation() {}
 
-    void LoadObjectData(const int object_size, const vector<DataPoint> data_set);
-    void LoadDepthImg(const cv::Mat &depth_img);
-
     void EstimateVelocity();
 
-    void GetObjectDepth();
+    void LoadObjectData(const int object_size,
+                        const vector<DataPoint> data_set,
+                        const geometry_msgs::PointStamped object_point_in_event);
+    void LoadDepthImg(const cv::Mat &depth_img);
 };
 
 #endif

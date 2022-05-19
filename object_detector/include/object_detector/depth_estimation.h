@@ -25,8 +25,11 @@ using namespace std;
 
 class DepthEstimation {
 private:
+    /* flags */
+    bool is_object_ = false;
+    bool object_depth_ = false;
+
     /* parameters */
-    const int k_valid_frame_ = 10;
     const cv::Mat k_depth_camera_intrinsic_ = (cv::Mat_<float>(3, 3) << 385.7481384277344, 0.0, 319.36944580078125,
                                                0.0, 385.7481384277344, 238.4856414794922,
                                                0.0, 0.0, 1.0);
@@ -42,6 +45,7 @@ private:
 
     /* data */
     cv::Mat depth_gray_;
+    cv::Rect roi_rect_;
     geometry_msgs::PointStamped depth_point_;
 
 public:
@@ -51,6 +55,11 @@ public:
     ~DepthEstimation() {}
 
     void EstimateDepth(const sensor_msgs::ImageConstPtr& depth_msg);
+    void CropDepthImage(const cv::Mat src, cv::Rect *dst_rect);
+    int SegmentDepth(const cv::Mat &img);
+
+    void SetIsObject(bool is_object) { is_object_ = is_object; }
+    void SetEventDetectionRect(cv::Rect &roi_rect) { roi_rect_ = roi_rect; }
 
     cv::Mat GetDepthImg() { return depth_gray_; }
 };

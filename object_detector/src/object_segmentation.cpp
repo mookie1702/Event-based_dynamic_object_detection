@@ -27,8 +27,8 @@ void ObjectSegmentation::ObjectSegment() {
     if (0 < object_size_) {
         is_object_ = true;
         CalcFarnebackOpticalFlow();
-        // DisplayObject();
         GetDetectROI();
+        DisplayObject();
     }
 }
 
@@ -217,21 +217,6 @@ void ObjectSegmentation::CalcFarnebackOpticalFlow() {
     }
 }
 
-void ObjectSegmentation::DisplayObject() {
-    cv::Mat display_img = compensated_img_.clone();
-    cv::cvtColor(display_img, display_img, cv::COLOR_GRAY2RGB);
-
-    for (auto point : data_set_) {
-        cv::Point2f tmp_point;
-        tmp_point.x = point.y_;
-        tmp_point.y = point.x_;
-        cv::circle(display_img, tmp_point, 1, cv::Scalar(0, 255, 0), 1);
-    }
-
-    cv::imshow("object", display_img);
-    cv::waitKey(0);
-}
-
 void ObjectSegmentation::GetDetectROI() {
     cv::Point2f min_point;
     cv::Point2f max_point;
@@ -251,8 +236,24 @@ void ObjectSegmentation::GetDetectROI() {
             min_point.y = point.y_;
     }
 
-    roi_rect_.x = min_point.x;
-    roi_rect_.y = min_point.y;
-    roi_rect_.width = max_point.x - min_point.x;
-    roi_rect_.height = max_point.y - min_point.y;
+    roi_rect_.y = min_point.x;
+    roi_rect_.x = min_point.y;
+    roi_rect_.width = max_point.y - min_point.y;
+    roi_rect_.height = max_point.x - min_point.x;
+}
+
+void ObjectSegmentation::DisplayObject() {
+    cv::Mat display_img = compensated_img_.clone();
+    cv::cvtColor(display_img, display_img, cv::COLOR_GRAY2RGB);
+
+    for (auto point : data_set_) {
+        cv::Point2f tmp_point;
+        tmp_point.x = point.y_;
+        tmp_point.y = point.x_;
+        cv::circle(display_img, tmp_point, 1, cv::Scalar(0, 255, 0), 1);
+    }
+
+    cv::rectangle(display_img, roi_rect_, cv::Scalar(0, 0, 255), 1, cv::LINE_8, 0);
+    cv::imshow("object", display_img);
+    cv::waitKey(0);
 }
