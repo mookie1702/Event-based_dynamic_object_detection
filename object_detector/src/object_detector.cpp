@@ -32,17 +32,34 @@ void ObjectDetector::EventCallback(const dvs_msgs::EventArray::ConstPtr &event_m
   // Motion Compensation
   motion_compensation_->MotionCompensate();
 
-  /* detect objects base on compensated img */
+  /* detect objects on compensated img */
+  cv::Mat time_img, event_count;
+  time_img = motion_compensation_->GetTimeImage();
+  event_count = motion_compensation_->GetEventCount();
+
   object_segmentation_->LoadImg(motion_compensation_->GetEventCount(),
                                 motion_compensation_->GetCompensatedTimeImg());
   object_segmentation_->ObjectSegment();
 
-  if (object_segmentation_->GetIsObject()) {
-    velocity_estimation_->LoadDepthImg(depth_estimation_->GetDepthImg());
-    velocity_estimation_->LoadObjectData(object_segmentation_->GetObjectSize(),
-                                         object_segmentation_->GetDataset());
-    velocity_estimation_->EstimateVelocity();
-  }
+  if (!object_segmentation_->GetIsObject())
+    return;
+
+  cv::Rect roi_rect = object_segmentation_->GetROIRect();
+  cv::Mat roi_mat = time_img(roi_rect);
+  roi_mat.convertTo(roi_mat, CV_8U);
+  auto ts = cv::mean(roi_mat, roi_mat);
+
+  geometry_msgs::PointStamped object_point_in_event;
+  object_point_in_event.header.stamp = event_msg->events[0].ts + ros::Duration(ts[0]);
+  object_point_in_event.header.frame_id = "/cam";
+  object_point_in_event.point.x = roi_rect.x + roi_rect.width * 0.5f;
+  object_point_in_event.point.y = roi_rect.y + roi_rect.height * 0.5f;
+  object_point_in_event.point.z = 0;
+
+  velocity_estimation_->LoadDepthImg(depth_estimation_->GetDepthImg());
+  velocity_estimation_->LoadObjectData(object_segmentation_->GetObjectSize(),
+                                       object_segmentation_->GetDataset());
+  // velocity_estimation_->EstimateVelocity();
 }
 
 void ObjectDetector::ImuCallback(const sensor_msgs::ImuConstPtr &imu_msg) {

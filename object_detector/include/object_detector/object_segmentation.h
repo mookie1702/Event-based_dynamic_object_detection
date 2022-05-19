@@ -39,6 +39,8 @@ private:
     int object_size_;
     vector<int> object_number_;
 
+    cv::Rect roi_rect_;
+
     DBSCAN::Ptr dbscan_;
 
 public:
@@ -57,9 +59,11 @@ public:
     void CalcLKOpticalFlow();
     void CalcLKOpticalFlow(vector<DataPoint>& dataset);
     void CalcFarnebackOpticalFlow();
+    void GetDetectROI();
 
     void DisplayObject();
 
+    cv::Rect GetROIRect() { return roi_rect_; }
     bool GetIsObject() { return is_object_; }
     int GetObjectSize() { return object_size_; }
     vector<DataPoint> GetDataset() { return data_set_; }

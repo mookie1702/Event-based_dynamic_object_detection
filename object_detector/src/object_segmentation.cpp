@@ -28,6 +28,7 @@ void ObjectSegmentation::ObjectSegment() {
         is_object_ = true;
         CalcFarnebackOpticalFlow();
         // DisplayObject();
+        GetDetectROI();
     }
 }
 
@@ -229,4 +230,29 @@ void ObjectSegmentation::DisplayObject() {
 
     cv::imshow("object", display_img);
     cv::waitKey(0);
+}
+
+void ObjectSegmentation::GetDetectROI() {
+    cv::Point2f min_point;
+    cv::Point2f max_point;
+    min_point.x = data_set_[0].x_;
+    min_point.y = data_set_[0].y_;
+    max_point.x = data_set_[0].x_;
+    max_point.y = data_set_[0].y_;
+
+    for (auto point : data_set_) {
+        if (max_point.x < point.x_)
+            max_point.x = point.x_;
+        if (max_point.y < point.y_)
+            max_point.y = point.y_;
+        if (min_point.x > point.x_)
+            min_point.x = point.x_;
+        if (min_point.y > point.y_)
+            min_point.y = point.y_;
+    }
+
+    roi_rect_.x = min_point.x;
+    roi_rect_.y = min_point.y;
+    roi_rect_.width = max_point.x - min_point.x;
+    roi_rect_.height = max_point.y - min_point.y;
 }

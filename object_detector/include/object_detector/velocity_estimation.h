@@ -33,7 +33,6 @@ public:
 
     void EstimateVelocity();
 
-    void FindCenterPoint();
     void GetObjectDepth();
 };
 
