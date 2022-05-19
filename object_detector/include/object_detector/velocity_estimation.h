@@ -23,6 +23,7 @@ using namespace std;
 class VelocityEstimation {
 private:
     /* flags */
+    bool first_running_ = true;
 
     /* parameters */
     const Eigen::Vector3d k_Grav_{0, 0, -9.81};

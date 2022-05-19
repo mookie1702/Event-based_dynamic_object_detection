@@ -8,7 +8,7 @@ void VelocityEstimation::main() {
     T_c2b_ = Eigen::Isometry3d::Identity();
     T_c2b_.rotate(q_c2b);
 
-    odom_sub_ = odom_sub_ = nh_.subscribe("/vins_estimator/odometry", 1, &VelocityEstimation::OdomCallback,
+    odom_sub_ = odom_sub_ = nh_.subscribe("/vins_estimator/odometry", 10, &VelocityEstimation::OdomCallback,
                                           this, ros::TransportHints().tcpNoDelay());
     event_point_sub_ = nh_.subscribe("/object_event_point", 10, &VelocityEstimation::EventCallback,
                                      this, ros::TransportHints().tcpNoDelay());
@@ -50,19 +50,44 @@ void VelocityEstimation::EventCallback(const geometry_msgs::PointStamped::ConstP
 }
 
 void VelocityEstimation::DepthCallback(const geometry_msgs::PointStamped::ConstPtr &msg) {
-    ros::Time t_now = msg->header.stamp;
+    static ros::Time t_prev;
+    static ros::Time t_now;
+    static cv::Point3d prev_object_postion;
+    static cv::Point3d object_postion;
 
     /* Get position of depth obs in world frame */
-    geometry_msgs::PointStamped p;
+    t_now = msg->header.stamp;
     Eigen::Vector3d p_cam(msg->point.x, msg->point.y, msg->point.z);
     Eigen::Vector3d p_world = T_c2w_ * p_cam;
-    p.header = msg->header;
-    p.header.frame_id = "/world";
     // millimeter -> meter
-    p.point.x = p_world(0) * 1e-3;
-    p.point.y = p_world(1) * 1e-3;
-    p.point.z = p_world(2) * 1e-3;
+    object_postion.x = p_world(0) * 1e-3;
+    object_postion.y = p_world(1) * 1e-3;
+    object_postion.z = p_world(2) * 1e-3;
 
-    cout << "The position of object in the world frame is:" << endl;
-    cout << "\t" << p.point.x << "\t" << p.point.y << "\t" << p.point.z << endl;
+    cout << "The position of object in the world frame is:"
+         << "\t" << object_postion.x
+         << "\t" << object_postion.y
+         << "\t" << object_postion.z << endl;
+
+    if (first_running_) {
+        first_running_ = false;
+        t_prev = t_now;
+        prev_object_postion = object_postion;
+        return;
+    }
+
+    double dt = (t_now - t_prev).toSec();
+
+    if (0 >= dt) {
+        first_running_ = true;
+    } else {
+        cv::Point3d object_velocity;
+        object_velocity.x = (object_postion.x - prev_object_postion.x) / dt;
+        object_velocity.y = (object_postion.y - prev_object_postion.y) / dt;
+        object_velocity.z = (object_postion.z - prev_object_postion.z) / dt;
+        cout << "Velocity is:"
+             << "\t" << object_velocity.x
+             << "\t" << object_velocity.y
+             << "\t" << object_velocity.z << endl;
+    }
 }
