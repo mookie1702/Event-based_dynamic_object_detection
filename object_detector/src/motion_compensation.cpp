@@ -3,7 +3,7 @@
 void MotionCompensation::MotionCompensate() {
     CleanTimeImgAndEventCount();
     AccumulateEvents(&source_time_frame_, &source_event_count_);
-    // Visualization(source_time_frame_, "source_time_frame_");
+    Visualization(source_time_frame_, "source_time_frame_");
 
 #ifdef IMU_BASED
     GetAvgAngularVelocity();

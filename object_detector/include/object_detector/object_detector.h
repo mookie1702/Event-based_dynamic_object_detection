@@ -30,6 +30,7 @@ private:
 
     /* parameters */
     string k_running_environment_;
+    string k_img_topic_;
     string k_event_topic_;
     string k_imu_topic_;
     string k_depth_topic_;
@@ -41,6 +42,7 @@ private:
 
     /* ROS utilities */
     ros::NodeHandle &nh_;
+    ros::Subscriber img_sub_;
     ros::Subscriber event_sub_;
     ros::Subscriber imu_sub_;
     ros::Subscriber depth_sub_;
@@ -50,6 +52,7 @@ private:
 
     /* ROS functions */
     void ReadParameters(ros::NodeHandle &n);
+    void ImgCallback(const sensor_msgs::Image::ConstPtr &img_msg);
     void EventCallback(const dvs_msgs::EventArray::ConstPtr &event_msg);
     void ImuCallback(const sensor_msgs::ImuConstPtr &imu_msg);
     void DepthCallback(const sensor_msgs::ImageConstPtr &depth_msg);

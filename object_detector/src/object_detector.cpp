@@ -13,6 +13,7 @@ void ObjectDetector::main() {
   object_segmentation_.reset(new ObjectSegmentation());
   depth_estimation_.reset(new DepthEstimation());
 
+  // img_sub_ = nh_.subscribe(k_img_topic_, 1, &ObjectDetector::ImgCallback, this);
   event_sub_ = nh_.subscribe(k_event_topic_, 2, &ObjectDetector::EventCallback, this);
   imu_sub_ = nh_.subscribe(k_imu_topic_, 10, &ObjectDetector::ImuCallback, this, ros::TransportHints().tcpNoDelay());
   depth_sub_ = nh_.subscribe(k_depth_topic_, 1, &ObjectDetector::DepthCallback, this, ros::TransportHints().tcpNoDelay());
@@ -23,9 +24,17 @@ void ObjectDetector::main() {
 
 void ObjectDetector::ReadParameters(ros::NodeHandle &n) {
   n.getParam("/object_detector_node/running_environment", k_running_environment_);
+  n.getParam("/object_detector_node/raw_image_topic", k_img_topic_);
   n.getParam("/object_detector_node/event_topic", k_event_topic_);
   n.getParam("/object_detector_node/imu_topic", k_imu_topic_);
   n.getParam("/object_detector_node/depth_topic", k_depth_topic_);
+}
+
+void ObjectDetector::ImgCallback(const sensor_msgs::Image::ConstPtr &img_msg) {
+  cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(img_msg, sensor_msgs::image_encodings::TYPE_8UC3);
+  cv::Mat display_img = cv_ptr->image;
+  cv::imshow("img_raw", display_img);
+  cv::waitKey(0);
 }
 
 void ObjectDetector::EventCallback(const dvs_msgs::EventArray::ConstPtr &event_msg) {
